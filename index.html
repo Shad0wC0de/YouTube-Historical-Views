@@ -8,542 +8,141 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0a0f;
-    --surface: #111118;
-    --surface2: #1a1a24;
-    --border: #252535;
-    --accent: #e84d8a;
-    --accent2: #7c5cfc;
-    --accent3: #22d3ee;
-    --text: #e8e8f0;
-    --muted: #6b6b8a;
-    --green: #34d399;
-    --chart-colors: #e84d8a, #7c5cfc, #22d3ee, #f59e0b, #34d399, #fb7185, #a78bfa, #67e8f9, #fcd34d, #6ee7b7;
+    --bg:#0a0a0f; --surface:#111118; --surface2:#1a1a24; --border:#252535;
+    --accent:#e84d8a; --accent2:#7c5cfc; --accent3:#22d3ee; --text:#e8e8f0;
+    --muted:#6b6b8a; --green:#34d399;
   }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Scanline overlay */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px);
-    pointer-events: none;
-    z-index: 9999;
-  }
-
-  /* Noise texture */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 9998;
-    opacity: 0.3;
-  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.012) 2px,rgba(255,255,255,.012) 4px);pointer-events:none;z-index:9999}
 
   /* Header */
-  header {
-    border-bottom: 1px solid var(--border);
-    padding: 0 40px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 64px;
-    position: sticky;
-    top: 0;
-    background: rgba(10, 10, 15, 0.95);
-    backdrop-filter: blur(12px);
-    z-index: 100;
-  }
+  header{border-bottom:1px solid var(--border);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;background:rgba(10,10,15,.96);backdrop-filter:blur(12px);z-index:100}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center}
+  .logo-icon svg{width:18px;height:18px;fill:white}
+  .logo-text{font-size:16px;font-weight:800;letter-spacing:-.5px}
+  .logo-text em{font-style:normal;color:var(--accent)}
+  .header-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:right;line-height:1.6}
+  .live-dot{display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%;margin-right:5px;animation:pulse 2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
 
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+  /* Loading */
+  #loadingOverlay{position:fixed;inset:0;background:rgba(10,10,15,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9000;gap:20px}
+  #loadingOverlay.hidden{display:none}
+  .spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{font-family:'DM Mono',monospace;font-size:13px;color:var(--muted)}
+  .loading-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);max-width:340px;text-align:center}
 
-  .logo-icon {
-    width: 32px;
-    height: 32px;
-    background: var(--accent);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+  /* Layout */
+  .container{max-width:1400px;margin:0 auto;padding:32px 40px}
+  .page-title{margin-bottom:28px}
+  .page-title h1{font-size:36px;font-weight:800;letter-spacing:-1.5px;line-height:1;margin-bottom:6px}
+  .page-title h1 em{font-style:normal;color:var(--accent)}
+  .page-title p{font-size:13px;color:var(--muted);font-family:'DM Mono',monospace}
 
-  .logo-icon svg { width: 18px; height: 18px; fill: white; }
+  /* Stats */
+  .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;position:relative;overflow:hidden}
+  .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);opacity:.7}
+  .stat-card:nth-child(2)::before{background:var(--accent2)}
+  .stat-card:nth-child(3)::before{background:var(--accent3)}
+  .stat-card:nth-child(4)::before{background:var(--green)}
+  .stat-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+  .stat-value{font-size:22px;font-weight:700;letter-spacing:-.5px}
+  .stat-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-  .logo-text {
-    font-size: 16px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    color: var(--text);
-  }
-
-  .logo-text span { color: var(--accent); }
-
-  .header-meta {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    text-align: right;
-    line-height: 1.6;
-  }
-
-  .header-meta .live-dot {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    background: var(--green);
-    border-radius: 50%;
-    margin-right: 5px;
-    animation: pulse 2s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.8); }
-  }
-
-  /* Main layout */
-  .container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 32px 40px;
-  }
-
-  /* Page title */
-  .page-title {
-    margin-bottom: 32px;
-  }
-
-  .page-title h1 {
-    font-size: 36px;
-    font-weight: 800;
-    letter-spacing: -1.5px;
-    line-height: 1;
-    margin-bottom: 6px;
-  }
-
-  .page-title h1 em {
-    font-style: normal;
-    color: var(--accent);
-  }
-
-  .page-title p {
-    font-size: 13px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-  }
-
-  /* Stats bar */
-  .stats-bar {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 32px;
-  }
-
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px 20px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--accent);
-    opacity: 0.6;
-  }
-
-  .stat-card:nth-child(2)::before { background: var(--accent2); }
-  .stat-card:nth-child(3)::before { background: var(--accent3); }
-  .stat-card:nth-child(4)::before { background: var(--green); }
-
-  .stat-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-  }
-
-  .stat-value {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-  }
+  /* Date filter */
+  .date-filter-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .ctrl-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap}
+  .date-input-wrap{display:flex;align-items:center;gap:8px}
+  .date-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;transition:border-color .2s;cursor:pointer;color-scheme:dark}
+  .date-input:focus{border-color:var(--accent2)}
+  .date-sep{color:var(--muted);font-family:'DM Mono',monospace;font-size:12px}
+  .quick-ranges{display:flex;gap:6px;flex-wrap:wrap}
+  .qr-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--muted);font-family:'Syne',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .qr-btn:hover{border-color:var(--accent2);color:var(--text)}
+  .qr-btn.active{background:var(--accent2);border-color:var(--accent2);color:white}
+  .date-info{margin-left:auto;font-family:'DM Mono',monospace;font-size:11px;color:var(--accent3);white-space:nowrap}
 
   /* Controls */
-  .controls {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 28px;
-    align-items: flex-start;
-    flex-wrap: wrap;
-  }
+  .controls{display:flex;gap:12px;margin-bottom:24px;align-items:flex-start;flex-wrap:wrap}
+  .search-box{flex:1;min-width:220px;position:relative}
+  .search-box input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px 10px 40px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+  .search-box input:focus{border-color:var(--accent)}
+  .search-box input::placeholder{color:var(--muted)}
+  .search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+  .ctrl-group{display:flex;gap:8px;align-items:center}
+  .pill-row{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .pill-btn{padding:9px 14px;background:none;border:none;color:var(--muted);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .pill-btn:hover{color:var(--text)}
+  .pill-btn.active{background:var(--accent2);color:white}
+  .pill-btn.active.agg{background:var(--accent3);color:var(--bg)}
 
-  .search-box {
-    flex: 1;
-    min-width: 280px;
-    position: relative;
-  }
+  /* Chart */
+  .chart-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:28px}
+  .chart-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;gap:16px;flex-wrap:wrap}
+  .chart-title-block h2{font-size:18px;font-weight:700;letter-spacing:-.3px;margin-bottom:4px}
+  .chart-title-block p{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+  .selected-info{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);text-align:right}
+  .chart-wrap{position:relative;height:340px}
+  .chart-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:13px}
+  .chart-empty svg{opacity:.3}
+  .chart-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;padding-top:20px;border-top:1px solid var(--border)}
+  .legend-pill{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 10px 4px 6px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s;max-width:260px}
+  .legend-pill:hover{border-color:var(--accent);color:var(--text)}
+  .legend-pill .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .legend-pill .pname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'DM Mono',monospace}
+  .legend-pill .px{margin-left:4px;opacity:.4;font-size:12px;flex-shrink:0}
+  .legend-pill:hover .px{opacity:1}
 
-  .search-box input {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 11px 16px 11px 42px;
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
+  /* Table */
+  .table-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+  .table-header{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+  .table-header h2{font-size:15px;font-weight:700;letter-spacing:-.2px}
+  .result-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+  .video-table{width:100%;border-collapse:collapse}
+  .video-table th{background:var(--surface2);padding:10px 16px;text-align:left;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;transition:color .15s}
+  .video-table th:hover{color:var(--text)}
+  .video-table th.sorted{color:var(--accent)}
+  .video-table td{padding:11px 16px;border-bottom:1px solid rgba(37,37,53,.5);vertical-align:middle;font-size:13px}
+  .video-table tr{transition:background .12s;cursor:pointer}
+  .video-table tr:hover td{background:var(--surface2)}
+  .video-table tr.selected td{background:rgba(232,77,138,.07)}
+  .video-table tr.selected td:first-child{border-left:3px solid var(--accent)}
+  .rank-num{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);width:40px}
+  .vtitle-cell{max-width:360px}
+  .vtitle-cell .vtitle{font-weight:600;font-size:13px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .vtitle-cell .vid{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px}
+  .views-num{font-family:'DM Mono',monospace;font-size:13px;font-weight:500}
+  .gain-cell{font-family:'DM Mono',monospace;font-size:13px}
+  .gain-pos{color:var(--green)} .gain-zero{color:var(--muted)} .gain-neg{color:#f87171}
+  .mini-spark{width:80px;height:32px}
+  .abtn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--muted);font-family:'Syne',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .abtn:hover{background:var(--accent);border-color:var(--accent);color:white}
+  .abtn.added{background:var(--accent);border-color:var(--accent);color:white}
+  .empty-state{text-align:center;padding:60px;color:var(--muted);font-family:'DM Mono',monospace;font-size:13px}
 
-  .search-box input:focus { border-color: var(--accent); }
-  .search-box input::placeholder { color: var(--muted); }
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--muted)}
 
-  .search-icon {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--muted);
-    pointer-events: none;
-  }
-
-  .sort-group {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .sort-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    white-space: nowrap;
-  }
-
-  .sort-btn {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 14px;
-    color: var(--muted);
-    font-family: 'Syne', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
-
-  .sort-btn:hover { border-color: var(--accent2); color: var(--text); }
-  .sort-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
-
-  .mode-toggle {
-    display: flex;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-  }
-
-  .mode-btn {
-    padding: 10px 16px;
-    background: none;
-    border: none;
-    color: var(--muted);
-    font-family: 'Syne', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-
-  .mode-btn.active { background: var(--accent2); color: white; }
-
-  /* Chart area */
-  .chart-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 28px;
-    margin-bottom: 32px;
-  }
-
-  .chart-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 24px;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-
-  .chart-title-block h2 {
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-    margin-bottom: 4px;
-  }
-
-  .chart-title-block p {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-  }
-
-  .selected-info {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--accent);
-    text-align: right;
-  }
-
-  .chart-wrap {
-    position: relative;
-    height: 320px;
-  }
-
-  /* Legend pills */
-  .chart-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border);
-  }
-
-  .legend-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 4px 10px 4px 6px;
-    font-size: 11px;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.15s;
-    max-width: 220px;
-  }
-
-  .legend-pill:hover { border-color: var(--accent); color: var(--text); }
-
-  .legend-pill .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .legend-pill .pill-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-family: 'DM Mono', monospace;
-  }
-
-  .legend-pill .pill-remove {
-    margin-left: 4px;
-    opacity: 0.4;
-    font-size: 12px;
-    flex-shrink: 0;
-  }
-
-  .legend-pill:hover .pill-remove { opacity: 1; }
-
-  /* Video table */
-  .table-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    overflow: hidden;
-  }
-
-  .table-header {
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .table-header h2 {
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: -0.2px;
-  }
-
-  .result-count {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-  }
-
-  .video-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .video-table th {
-    background: var(--surface2);
-    padding: 10px 16px;
-    text-align: left;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-    cursor: pointer;
-    user-select: none;
-    transition: color 0.15s;
-  }
-
-  .video-table th:hover { color: var(--text); }
-  .video-table th.sorted { color: var(--accent); }
-
-  .video-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(37, 37, 53, 0.5);
-    vertical-align: middle;
-    font-size: 13px;
-  }
-
-  .video-table tr {
-    transition: background 0.12s;
-    cursor: pointer;
-  }
-
-  .video-table tr:hover td { background: var(--surface2); }
-
-  .video-table tr.selected td { background: rgba(232, 77, 138, 0.08); }
-  .video-table tr.selected td:first-child { border-left: 3px solid var(--accent); }
-
-  .rank-num {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--muted);
-    width: 36px;
-  }
-
-  .video-title-cell {
-    max-width: 380px;
-  }
-
-  .video-title-cell .title {
-    font-weight: 600;
-    font-size: 13px;
-    line-height: 1.3;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
-
-  .video-title-cell .url-tag {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--muted);
-    margin-top: 2px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 300px;
-  }
-
-  .views-num {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    font-weight: 500;
-  }
-
-  .gain-cell {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-  }
-
-  .gain-pos { color: var(--green); }
-  .gain-zero { color: var(--muted); }
-  .gain-neg { color: #f87171; }
-
-  .mini-sparkline {
-    width: 80px;
-    height: 32px;
-  }
-
-  .action-btn {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 5px 10px;
-    color: var(--muted);
-    font-family: 'Syne', sans-serif;
-    font-size: 11px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
-
-  .action-btn:hover { background: var(--accent); border-color: var(--accent); color: white; }
-  .action-btn.added { background: var(--accent); border-color: var(--accent); color: white; }
-
-  .empty-state {
-    text-align: center;
-    padding: 60px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-  }
-
-  /* Scroll bar */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-
-  /* Responsive */
-  @media (max-width: 900px) {
-    header { padding: 0 20px; }
-    .container { padding: 20px; }
-    .stats-bar { grid-template-columns: repeat(2, 1fr); }
-    .video-title-cell { max-width: 200px; }
-    .mini-sparkline { display: none; }
-    th.hide-sm, td.hide-sm { display: none; }
+  @media(max-width:900px){
+    header{padding:0 16px} .container{padding:16px}
+    .stats-bar{grid-template-columns:repeat(2,1fr)}
+    th.hide-sm,td.hide-sm{display:none}
   }
 </style>
 </head>
 <body>
+
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading view history…</div>
+  <div class="loading-sub" id="loadSub">Scanning data/ directory for CSV files</div>
+</div>
 
 <header>
   <div class="logo">
@@ -553,53 +152,90 @@
     <span class="logo-text">YT View <em>Pulse</em></span>
   </div>
   <div class="header-meta">
-    <div><span class="live-dot"></span>DATA FROM APR 14, 2026</div>
-    <div>91 VIDEOS · 38 SNAPSHOTS</div>
+    <div><span class="live-dot"></span><span id="hdrRange">Loading…</span></div>
+    <div id="hdrMeta">— videos · — files</div>
   </div>
 </header>
 
 <div class="container">
   <div class="page-title">
     <h1>YouTube <em>View</em> Growth</h1>
-    <p>// Real-time view count tracking — hover over rows to preview, click to add to chart</p>
+    <p>// Loads all CSVs from <strong>data/</strong> · click rows to chart · data starts from <strong>Aug 3 2025</strong></p>
   </div>
 
-  <div class="stats-bar" id="statsBar">
+  <div class="stats-bar">
     <div class="stat-card">
-      <div class="stat-label">Total Videos</div>
-      <div class="stat-value" id="statVideos">91</div>
+      <div class="stat-label">Tracked Videos</div>
+      <div class="stat-value" id="sVids">—</div>
+      <div class="stat-sub" id="sRange">—</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Top Views</div>
-      <div class="stat-value" id="statTop">—</div>
+      <div class="stat-label">Highest Views</div>
+      <div class="stat-value" id="sTopV">—</div>
+      <div class="stat-sub" id="sTopT">—</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Fastest Grower</div>
-      <div class="stat-value" id="statFastest">—</div>
+      <div class="stat-label">Most Growth (period)</div>
+      <div class="stat-value" id="sFastV">—</div>
+      <div class="stat-sub" id="sFastT">—</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Total Views (All)</div>
-      <div class="stat-value" id="statTotal">—</div>
+      <div class="stat-label">Combined Views</div>
+      <div class="stat-value" id="sTotalV">—</div>
+      <div class="stat-sub" id="sPoints">—</div>
     </div>
+  </div>
+
+  <!-- Date filter -->
+  <div class="date-filter-bar">
+    <span class="ctrl-label">Date Range</span>
+    <div class="date-input-wrap">
+      <input type="date" id="dateFrom" class="date-input" />
+      <span class="date-sep">→</span>
+      <input type="date" id="dateTo"   class="date-input" />
+    </div>
+    <div class="quick-ranges">
+      <button class="qr-btn" data-range="7">Last 7d</button>
+      <button class="qr-btn" data-range="30">Last 30d</button>
+      <button class="qr-btn" data-range="90">Last 90d</button>
+      <button class="qr-btn" data-range="180">Last 6mo</button>
+      <button class="qr-btn active" data-range="all">All Time</button>
+    </div>
+    <div class="date-info" id="dateInfo">— snapshots in range</div>
   </div>
 
   <!-- Controls -->
   <div class="controls">
     <div class="search-box">
       <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" id="searchInput" placeholder="Search videos..." />
+      <input type="text" id="searchInput" placeholder="Search videos…" />
     </div>
 
-    <div class="sort-group">
-      <span class="sort-label">SORT BY</span>
-      <button class="sort-btn" data-sort="latestViews">Views</button>
-      <button class="sort-btn active" data-sort="totalGain">Growth</button>
-      <button class="sort-btn" data-sort="title">Title</button>
+    <div class="ctrl-group">
+      <span class="ctrl-label">Sort</span>
+      <div class="pill-row">
+        <button class="pill-btn" data-sort="latestViews">Views</button>
+        <button class="pill-btn active" data-sort="totalGain">Growth</button>
+        <button class="pill-btn" data-sort="title">Title</button>
+      </div>
     </div>
 
-    <div class="mode-toggle">
-      <button class="mode-btn active" data-mode="absolute">Absolute</button>
-      <button class="mode-btn" data-mode="growth">Growth Rate</button>
+    <div class="ctrl-group">
+      <span class="ctrl-label">Chart</span>
+      <div class="pill-row">
+        <button class="pill-btn active" data-mode="absolute">Absolute</button>
+        <button class="pill-btn" data-mode="delta">Delta</button>
+      </div>
+    </div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">Aggregate</span>
+      <div class="pill-row">
+        <button class="pill-btn agg active" data-agg="hourly">Hourly</button>
+        <button class="pill-btn agg" data-agg="daily">Daily</button>
+        <button class="pill-btn agg" data-agg="monthly">Monthly</button>
+        <button class="pill-btn agg" data-agg="yearly">Yearly</button>
+      </div>
     </div>
   </div>
 
@@ -608,11 +244,15 @@
     <div class="chart-header">
       <div class="chart-title-block">
         <h2>View Count Over Time</h2>
-        <p id="chartSubtitle">Click videos below to compare · Up to 5 at once</p>
+        <p id="chartSub">Click any video row below to plot it here · up to 5 at once</p>
       </div>
-      <div class="selected-info" id="selectedInfo">No videos selected</div>
+      <div class="selected-info" id="selInfo">No videos selected</div>
     </div>
     <div class="chart-wrap">
+      <div class="chart-empty" id="chartEmpty">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Click any video row to plot it here
+      </div>
       <canvas id="mainChart"></canvas>
     </div>
     <div class="chart-legend" id="chartLegend"></div>
@@ -622,317 +262,505 @@
   <div class="table-section">
     <div class="table-header">
       <h2>All Videos</h2>
-      <span class="result-count" id="resultCount"></span>
+      <span class="result-count" id="resCount">Loading…</span>
     </div>
-    <div style="overflow-x: auto;">
+    <div style="overflow-x:auto">
       <table class="video-table">
         <thead>
           <tr>
-            <th style="width:48px">#</th>
+            <th style="width:44px">#</th>
             <th>Video</th>
-            <th class="sorted" data-sort="totalGain">Growth ▼</th>
+            <th class="sorted">Growth</th>
             <th>Latest Views</th>
             <th class="hide-sm">Trend</th>
-            <th style="width:100px"></th>
+            <th style="width:110px"></th>
           </tr>
         </thead>
-        <tbody id="videoTableBody"></tbody>
+        <tbody id="tBody"><tr><td colspan="6"><div class="empty-state">Loading CSV files…</div></td></tr></tbody>
       </table>
     </div>
   </div>
 </div>
 
 <script>
+/* ── CONFIG ── */
+const DATA_DIR    = './data/';
+const FILE_PFX    = 'youtube_views_log_';
+const DATA_START  = '2025-08-03';
 const COLORS = ['#e84d8a','#7c5cfc','#22d3ee','#f59e0b','#34d399','#fb7185','#a78bfa','#67e8f9','#fcd34d','#6ee7b7'];
 
-const DATA = [{"title":"#BINI : Pantropiko Performance Video | BINI","url":"https://www.youtube.com/watch?v=Zx31bB2vMns","data":[{"t":"2026-04-14 00:03:49","v":120032307},{"t":"2026-04-14 00:11:32","v":120032368},{"t":"2026-04-14 00:19:11","v":120032511},{"t":"2026-04-14 00:26:45","v":120032920},{"t":"2026-04-14 00:34:32","v":120033331},{"t":"2026-04-14 00:42:03","v":120033314},{"t":"2026-04-14 00:49:32","v":120033779},{"t":"2026-04-14 00:58:19","v":120034010},{"t":"2026-04-14 01:05:41","v":120034214},{"t":"2026-04-14 01:13:05","v":120034323},{"t":"2026-04-14 01:20:25","v":120034543},{"t":"2026-04-14 01:27:44","v":120034695},{"t":"2026-04-14 01:35:02","v":120034845},{"t":"2026-04-14 01:42:19","v":120034989},{"t":"2026-04-14 01:49:43","v":120035357},{"t":"2026-04-14 01:57:00","v":120035601},{"t":"2026-04-14 02:04:19","v":120035784},{"t":"2026-04-14 02:11:40","v":120035855},{"t":"2026-04-14 02:19:05","v":120036104},{"t":"2026-04-14 02:26:42","v":120036286},{"t":"2026-04-14 02:34:01","v":120036521},{"t":"2026-04-14 02:42:51","v":120036635},{"t":"2026-04-14 02:51:17","v":120036802},{"t":"2026-04-14 02:58:32","v":120036880},{"t":"2026-04-14 03:05:58","v":120037002},{"t":"2026-04-14 03:13:15","v":120037049},{"t":"2026-04-14 03:20:38","v":120037209},{"t":"2026-04-14 03:27:56","v":120037291},{"t":"2026-04-14 03:35:22","v":120037420},{"t":"2026-04-14 03:42:39","v":120037536},{"t":"2026-04-14 03:49:56","v":120037700},{"t":"2026-04-14 03:58:45","v":120037852},{"t":"2026-04-14 04:05:59","v":120037903},{"t":"2026-04-14 04:13:12","v":120037931},{"t":"2026-04-14 04:20:26","v":120038105},{"t":"2026-04-14 04:27:40","v":120038194},{"t":"2026-04-14 04:34:53","v":120038296}],"totalGain":5989,"latestViews":120038296},{"title":"BINI | 'Salamin, Salamin' Official Music Video","url":"https://www.youtube.com/watch?v=J1Ip2sC_lss","data":[{"t":"2026-04-14 00:03:49","v":93952136},{"t":"2026-04-14 00:11:32","v":93952182},{"t":"2026-04-14 00:19:11","v":93952306},{"t":"2026-04-14 00:26:45","v":93952406},{"t":"2026-04-14 00:34:32","v":93952582},{"t":"2026-04-14 00:42:03","v":93952731},{"t":"2026-04-14 00:49:32","v":93952971},{"t":"2026-04-14 00:58:19","v":93953141},{"t":"2026-04-14 01:05:41","v":93953174},{"t":"2026-04-14 01:13:05","v":93953216},{"t":"2026-04-14 01:20:25","v":93953327},{"t":"2026-04-14 01:27:44","v":93953385},{"t":"2026-04-14 01:35:02","v":93953481},{"t":"2026-04-14 01:42:19","v":93953555},{"t":"2026-04-14 01:49:43","v":93953723},{"t":"2026-04-14 01:57:00","v":93953823},{"t":"2026-04-14 02:04:19","v":93953935},{"t":"2026-04-14 02:11:40","v":93953962},{"t":"2026-04-14 02:19:05","v":93954058},{"t":"2026-04-14 02:26:42","v":93954124},{"t":"2026-04-14 02:34:01","v":93954227},{"t":"2026-04-14 02:42:51","v":93954334},{"t":"2026-04-14 02:51:17","v":93954380},{"t":"2026-04-14 02:58:32","v":93954439},{"t":"2026-04-14 03:05:58","v":93954456},{"t":"2026-04-14 03:13:15","v":93954510},{"t":"2026-04-14 03:20:38","v":93954551},{"t":"2026-04-14 03:27:56","v":93954609},{"t":"2026-04-14 03:35:22","v":93954650},{"t":"2026-04-14 03:42:39","v":93954701},{"t":"2026-04-14 03:49:56","v":93954794},{"t":"2026-04-14 03:58:45","v":93954847},{"t":"2026-04-14 04:05:59","v":93954886},{"t":"2026-04-14 04:13:12","v":93954964},{"t":"2026-04-14 04:20:26","v":93955010},{"t":"2026-04-14 04:27:40","v":93955038},{"t":"2026-04-14 04:34:53","v":93955083}],"totalGain":2947,"latestViews":93955083},{"title":"BINI | 'Cherry On Top' Official Music Video","url":"https://www.youtube.com/watch?v=wufUX5P2Ds8","data":[{"t":"2026-04-14 00:03:49","v":58512174},{"t":"2026-04-14 00:11:32","v":58512223},{"t":"2026-04-14 00:19:11","v":58512340},{"t":"2026-04-14 00:26:45","v":58512453},{"t":"2026-04-14 00:34:32","v":58512672},{"t":"2026-04-14 00:42:03","v":58512744},{"t":"2026-04-14 00:49:32","v":58512948},{"t":"2026-04-14 00:58:19","v":58513120},{"t":"2026-04-14 01:05:41","v":58513164},{"t":"2026-04-14 01:13:05","v":58513259},{"t":"2026-04-14 01:20:25","v":58513325},{"t":"2026-04-14 01:27:44","v":58513397},{"t":"2026-04-14 01:35:02","v":58513458},{"t":"2026-04-14 01:42:19","v":58513550},{"t":"2026-04-14 01:49:43","v":58513628},{"t":"2026-04-14 01:57:00","v":58513720},{"t":"2026-04-14 02:04:19","v":58513832},{"t":"2026-04-14 02:11:40","v":58513857},{"t":"2026-04-14 02:19:05","v":58513964},{"t":"2026-04-14 02:26:42","v":58514014},{"t":"2026-04-14 02:34:01","v":58514143},{"t":"2026-04-14 02:42:51","v":58514239},{"t":"2026-04-14 02:51:17","v":58514280},{"t":"2026-04-14 02:58:32","v":58514353},{"t":"2026-04-14 03:05:58","v":58514367},{"t":"2026-04-14 03:13:15","v":58514425},{"t":"2026-04-14 03:20:38","v":58514453},{"t":"2026-04-14 03:27:56","v":58514522},{"t":"2026-04-14 03:35:22","v":58514558},{"t":"2026-04-14 03:42:39","v":58514633},{"t":"2026-04-14 03:49:56","v":58514664},{"t":"2026-04-14 03:58:45","v":58514718},{"t":"2026-04-14 04:05:59","v":58514739},{"t":"2026-04-14 04:13:12","v":58514804},{"t":"2026-04-14 04:20:26","v":58514844},{"t":"2026-04-14 04:27:40","v":58514905},{"t":"2026-04-14 04:34:53","v":58514928}],"totalGain":2754,"latestViews":58514928},{"title":"BINI x Orchestra of the Filipino Youth - OXYGEN (Official Music Video)","url":"https://www.youtube.com/watch?v=58KcYLwT-gU","data":[{"t":"2026-04-14 00:03:49","v":35966713},{"t":"2026-04-14 00:11:32","v":35966718},{"t":"2026-04-14 00:19:11","v":35966723},{"t":"2026-04-14 00:26:45","v":35966733},{"t":"2026-04-14 00:34:32","v":35966739},{"t":"2026-04-14 00:42:03","v":35966745},{"t":"2026-04-14 00:49:32","v":35966763},{"t":"2026-04-14 00:58:19","v":35966766},{"t":"2026-04-14 01:05:41","v":35966768},{"t":"2026-04-14 01:13:05","v":35966770},{"t":"2026-04-14 01:20:25","v":35966772},{"t":"2026-04-14 01:27:44","v":35966776},{"t":"2026-04-14 01:35:02","v":35966776},{"t":"2026-04-14 01:42:19","v":35966776},{"t":"2026-04-14 01:49:43","v":35966776},{"t":"2026-04-14 01:57:00","v":35966776},{"t":"2026-04-14 02:04:19","v":35966776},{"t":"2026-04-14 02:11:40","v":35966776},{"t":"2026-04-14 02:19:05","v":35966776},{"t":"2026-04-14 02:26:42","v":35966776},{"t":"2026-04-14 02:34:01","v":35966813},{"t":"2026-04-14 02:42:51","v":35966776},{"t":"2026-04-14 02:51:17","v":35966776},{"t":"2026-04-14 02:58:32","v":35966776},{"t":"2026-04-14 03:05:58","v":35966776},{"t":"2026-04-14 03:13:15","v":35966776},{"t":"2026-04-14 03:20:38","v":35966776},{"t":"2026-04-14 03:27:56","v":35966776},{"t":"2026-04-14 03:35:22","v":35966776},{"t":"2026-04-14 03:42:39","v":35966776},{"t":"2026-04-14 03:49:56","v":35966813},{"t":"2026-04-14 03:58:45","v":35966776},{"t":"2026-04-14 04:05:59","v":35966776},{"t":"2026-04-14 04:13:12","v":35966776},{"t":"2026-04-14 04:20:26","v":35966776},{"t":"2026-04-14 04:27:40","v":35966776},{"t":"2026-04-14 04:34:53","v":35966776}],"totalGain":63,"latestViews":35966776},{"title":"Karera Official Music Video | BINI","url":"https://www.youtube.com/watch?v=QNV2DmBxChQ","data":[{"t":"2026-04-14 00:03:49","v":34405505},{"t":"2026-04-14 00:11:32","v":34405565},{"t":"2026-04-14 00:19:11","v":34405547},{"t":"2026-04-14 00:26:45","v":34405669},{"t":"2026-04-14 00:34:32","v":34405756},{"t":"2026-04-14 00:42:03","v":34405848},{"t":"2026-04-14 00:49:32","v":34405916},{"t":"2026-04-14 00:58:19","v":34406002},{"t":"2026-04-14 01:05:41","v":34406029},{"t":"2026-04-14 01:13:05","v":34406105},{"t":"2026-04-14 01:20:25","v":34406149},{"t":"2026-04-14 01:27:44","v":34406207},{"t":"2026-04-14 01:35:02","v":34406253},{"t":"2026-04-14 01:42:19","v":34406330},{"t":"2026-04-14 01:49:43","v":34406385},{"t":"2026-04-14 01:57:00","v":34406499},{"t":"2026-04-14 02:04:19","v":34406521},{"t":"2026-04-14 02:11:40","v":34406562},{"t":"2026-04-14 02:19:05","v":34406612},{"t":"2026-04-14 02:26:42","v":34406676},{"t":"2026-04-14 02:34:01","v":34406715},{"t":"2026-04-14 02:42:51","v":34406793},{"t":"2026-04-14 02:51:17","v":34406831},{"t":"2026-04-14 02:58:32","v":34406877},{"t":"2026-04-14 03:05:58","v":34406885},{"t":"2026-04-14 03:13:15","v":34406932},{"t":"2026-04-14 03:20:38","v":34406946},{"t":"2026-04-14 03:27:56","v":34406994},{"t":"2026-04-14 03:35:22","v":34407008},{"t":"2026-04-14 03:42:39","v":34407063},{"t":"2026-04-14 03:49:56","v":34407086},{"t":"2026-04-14 03:58:45","v":34407127},{"t":"2026-04-14 04:05:59","v":34407136},{"t":"2026-04-14 04:13:12","v":34407191},{"t":"2026-04-14 04:20:26","v":34407222},{"t":"2026-04-14 04:27:40","v":34407251},{"t":"2026-04-14 04:34:53","v":34407263}],"totalGain":1758,"latestViews":34407263},{"title":"BINI : 'Salamin, Salamin' Dance Practice","url":"https://www.youtube.com/watch?v=lY87lr0twyk","data":[{"t":"2026-04-14 00:03:49","v":31528518},{"t":"2026-04-14 00:11:32","v":31528547},{"t":"2026-04-14 00:19:11","v":31528579},{"t":"2026-04-14 00:26:45","v":31528634},{"t":"2026-04-14 00:34:32","v":31528701},{"t":"2026-04-14 00:42:03","v":31528734},{"t":"2026-04-14 00:49:32","v":31528804},{"t":"2026-04-14 00:58:19","v":31528884},{"t":"2026-04-14 01:05:41","v":31528887},{"t":"2026-04-14 01:13:05","v":31528921},{"t":"2026-04-14 01:20:25","v":31528908},{"t":"2026-04-14 01:27:44","v":31528952},{"t":"2026-04-14 01:35:02","v":31528969},{"t":"2026-04-14 01:42:19","v":31529018},{"t":"2026-04-14 01:49:43","v":31529049},{"t":"2026-04-14 01:57:00","v":31529111},{"t":"2026-04-14 02:04:19","v":31529144},{"t":"2026-04-14 02:11:40","v":31529153},{"t":"2026-04-14 02:19:05","v":31529189},{"t":"2026-04-14 02:26:42","v":31529210},{"t":"2026-04-14 02:34:01","v":31529243},{"t":"2026-04-14 02:42:51","v":31529279},{"t":"2026-04-14 02:51:17","v":31529299},{"t":"2026-04-14 02:58:32","v":31529317},{"t":"2026-04-14 03:05:58","v":31529318},{"t":"2026-04-14 03:13:15","v":31529331},{"t":"2026-04-14 03:20:38","v":31529340},{"t":"2026-04-14 03:27:56","v":31529358},{"t":"2026-04-14 03:35:22","v":31529366},{"t":"2026-04-14 03:42:39","v":31529397},{"t":"2026-04-14 03:49:56","v":31529407},{"t":"2026-04-14 03:58:45","v":31529427},{"t":"2026-04-14 04:05:59","v":31529434},{"t":"2026-04-14 04:13:12","v":31529459},{"t":"2026-04-14 04:20:26","v":31529475},{"t":"2026-04-14 04:27:40","v":31529494},{"t":"2026-04-14 04:34:53","v":31529501}],"totalGain":983,"latestViews":31529501},{"title":"Lagi | Official Music Video | #BINI","url":"https://www.youtube.com/watch?v=KyndoXN4_ns","data":[{"t":"2026-04-14 00:03:49","v":30591110},{"t":"2026-04-14 00:11:32","v":30591119},{"t":"2026-04-14 00:19:11","v":30591160},{"t":"2026-04-14 00:26:45","v":30591206},{"t":"2026-04-14 00:34:32","v":30591281},{"t":"2026-04-14 00:42:03","v":30591334},{"t":"2026-04-14 00:49:32","v":30591437},{"t":"2026-04-14 00:58:19","v":30591503},{"t":"2026-04-14 01:05:41","v":30591521},{"t":"2026-04-14 01:13:05","v":30591558},{"t":"2026-04-14 01:20:25","v":30591585},{"t":"2026-04-14 01:27:44","v":30591623},{"t":"2026-04-14 01:35:02","v":30591645},{"t":"2026-04-14 01:42:19","v":30591686},{"t":"2026-04-14 01:49:43","v":30591734},{"t":"2026-04-14 01:57:00","v":30591765},{"t":"2026-04-14 02:04:19","v":30591811},{"t":"2026-04-14 02:11:40","v":30591826},{"t":"2026-04-14 02:19:05","v":30591875},{"t":"2026-04-14 02:26:42","v":30591905},{"t":"2026-04-14 02:34:01","v":30591948},{"t":"2026-04-14 02:42:51","v":30591993},{"t":"2026-04-14 02:51:17","v":30592015},{"t":"2026-04-14 02:58:32","v":30592050},{"t":"2026-04-14 03:05:58","v":30592054},{"t":"2026-04-14 03:13:15","v":30592075},{"t":"2026-04-14 03:20:38","v":30592084},{"t":"2026-04-14 03:27:56","v":30592108},{"t":"2026-04-14 03:35:22","v":30592118},{"t":"2026-04-14 03:42:39","v":30592157},{"t":"2026-04-14 03:49:56","v":30592167},{"t":"2026-04-14 03:58:45","v":30592182},{"t":"2026-04-14 04:05:59","v":30592188},{"t":"2026-04-14 04:13:12","v":30592215},{"t":"2026-04-14 04:20:26","v":30592228},{"t":"2026-04-14 04:27:40","v":30592258},{"t":"2026-04-14 04:34:53","v":30592267}],"totalGain":1157,"latestViews":30592267},{"title":"BINI | 'Blink Twice' Official Music Video","url":"https://www.youtube.com/watch?v=PlySXiQDGsM","data":[{"t":"2026-04-14 00:03:49","v":23732504},{"t":"2026-04-14 00:11:32","v":23732563},{"t":"2026-04-14 00:19:11","v":23732548},{"t":"2026-04-14 00:26:45","v":23732624},{"t":"2026-04-14 00:34:32","v":23732771},{"t":"2026-04-14 00:42:03","v":23732874},{"t":"2026-04-14 00:49:32","v":23732946},{"t":"2026-04-14 00:58:19","v":23733078},{"t":"2026-04-14 01:05:41","v":23733101},{"t":"2026-04-14 01:13:05","v":23733184},{"t":"2026-04-14 01:20:25","v":23733221},{"t":"2026-04-14 01:27:44","v":23733280},{"t":"2026-04-14 01:35:02","v":23733319},{"t":"2026-04-14 01:42:19","v":23733383},{"t":"2026-04-14 01:49:43","v":23733464},{"t":"2026-04-14 01:57:00","v":23733579},{"t":"2026-04-14 02:04:19","v":23733617},{"t":"2026-04-14 02:11:40","v":23733659},{"t":"2026-04-14 02:19:05","v":23733697},{"t":"2026-04-14 02:26:42","v":23733776},{"t":"2026-04-14 02:34:01","v":23733817},{"t":"2026-04-14 02:42:51","v":23733886},{"t":"2026-04-14 02:51:17","v":23733946},{"t":"2026-04-14 02:58:32","v":23733972},{"t":"2026-04-14 03:05:58","v":23733990},{"t":"2026-04-14 03:13:15","v":23734033},{"t":"2026-04-14 03:20:38","v":23734056},{"t":"2026-04-14 03:27:56","v":23734110},{"t":"2026-04-14 03:35:22","v":23734136},{"t":"2026-04-14 03:42:39","v":23734192},{"t":"2026-04-14 03:49:56","v":23734221},{"t":"2026-04-14 03:58:45","v":23734260},{"t":"2026-04-14 04:05:59","v":23734281},{"t":"2026-04-14 04:13:12","v":23734327},{"t":"2026-04-14 04:20:26","v":23734360},{"t":"2026-04-14 04:27:40","v":23734383},{"t":"2026-04-14 04:34:53","v":23734403}],"totalGain":1899,"latestViews":23734403},{"title":"Na Na Na | Official Music Video | #BINI","url":"https://www.youtube.com/watch?v=wJ6GCeSR4ss","data":[{"t":"2026-04-14 00:03:49","v":19485311},{"t":"2026-04-14 00:11:32","v":19485323},{"t":"2026-04-14 00:19:11","v":19485362},{"t":"2026-04-14 00:26:45","v":19485391},{"t":"2026-04-14 00:34:32","v":19485471},{"t":"2026-04-14 00:42:03","v":19485494},{"t":"2026-04-14 00:49:32","v":19485559},{"t":"2026-04-14 00:58:19","v":19485618},{"t":"2026-04-14 01:05:41","v":19485618},{"t":"2026-04-14 01:13:05","v":19485618},{"t":"2026-04-14 01:20:25","v":19485618},{"t":"2026-04-14 01:27:44","v":19485618},{"t":"2026-04-14 01:35:02","v":19485687},{"t":"2026-04-14 01:42:19","v":19485703},{"t":"2026-04-14 01:49:43","v":19485736},{"t":"2026-04-14 01:57:00","v":19485758},{"t":"2026-04-14 02:04:19","v":19485791},{"t":"2026-04-14 02:11:40","v":19485801},{"t":"2026-04-14 02:19:05","v":19485848},{"t":"2026-04-14 02:26:42","v":19485865},{"t":"2026-04-14 02:34:01","v":19485904},{"t":"2026-04-14 02:42:51","v":19485938},{"t":"2026-04-14 02:51:17","v":19485953},{"t":"2026-04-14 02:58:32","v":19485977},{"t":"2026-04-14 03:05:58","v":19485979},{"t":"2026-04-14 03:13:15","v":19486002},{"t":"2026-04-14 03:20:38","v":19486010},{"t":"2026-04-14 03:27:56","v":19486020},{"t":"2026-04-14 03:35:22","v":19486042},{"t":"2026-04-14 03:42:39","v":19486056},{"t":"2026-04-14 03:49:56","v":19486080},{"t":"2026-04-14 03:58:45","v":19486096},{"t":"2026-04-14 04:05:59","v":19486108},{"t":"2026-04-14 04:13:12","v":19486126},{"t":"2026-04-14 04:20:26","v":19486145},{"t":"2026-04-14 04:27:40","v":19486163},{"t":"2026-04-14 04:34:53","v":19486183}],"totalGain":872,"latestViews":19486183},{"title":"Da Coconut Nut (Official Music Video) | BINI TV","url":"https://www.youtube.com/watch?v=eZfeW9WDwmA","data":[{"t":"2026-04-14 00:03:49","v":12666844},{"t":"2026-04-14 00:11:32","v":12666870},{"t":"2026-04-14 00:19:11","v":12666879},{"t":"2026-04-14 00:26:45","v":12666916},{"t":"2026-04-14 00:34:32","v":12666970},{"t":"2026-04-14 00:42:03","v":12666991},{"t":"2026-04-14 00:49:32","v":12667028},{"t":"2026-04-14 00:58:19","v":12667055},{"t":"2026-04-14 01:05:41","v":12667067},{"t":"2026-04-14 01:13:05","v":12667069},{"t":"2026-04-14 01:20:25","v":12667093},{"t":"2026-04-14 01:27:44","v":12667104},{"t":"2026-04-14 01:35:02","v":12667125},{"t":"2026-04-14 01:42:19","v":12667136},{"t":"2026-04-14 01:49:43","v":12667184},{"t":"2026-04-14 01:57:00","v":12667206},{"t":"2026-04-14 02:04:19","v":12667218},{"t":"2026-04-14 02:11:40","v":12667232},{"t":"2026-04-14 02:19:05","v":12667242},{"t":"2026-04-14 02:26:42","v":12667242},{"t":"2026-04-14 02:34:01","v":12667298},{"t":"2026-04-14 02:42:51","v":12667309},{"t":"2026-04-14 02:51:17","v":12667320},{"t":"2026-04-14 02:58:32","v":12667335},{"t":"2026-04-14 03:05:58","v":12667349},{"t":"2026-04-14 03:13:15","v":12667353},{"t":"2026-04-14 03:20:38","v":12667370},{"t":"2026-04-14 03:27:56","v":12667385},{"t":"2026-04-14 03:35:22","v":12667401},{"t":"2026-04-14 03:42:39","v":12667412},{"t":"2026-04-14 03:49:56","v":12667424},{"t":"2026-04-14 03:58:45","v":12667430},{"t":"2026-04-14 04:05:59","v":12667440},{"t":"2026-04-14 04:13:12","v":12667443},{"t":"2026-04-14 04:20:26","v":12667459},{"t":"2026-04-14 04:27:40","v":12667459},{"t":"2026-04-14 04:34:53","v":12667471}],"totalGain":627,"latestViews":12667471},{"title":"Strings Official Music Video | BINI","url":"https://www.youtube.com/watch?v=OGBS-8IsPJ0","data":[{"t":"2026-04-14 00:03:49","v":12573121},{"t":"2026-04-14 00:11:32","v":12573127},{"t":"2026-04-14 00:19:11","v":12573142},{"t":"2026-04-14 00:26:45","v":12573207},{"t":"2026-04-14 00:34:32","v":12573260},{"t":"2026-04-14 00:42:03","v":12573276},{"t":"2026-04-14 00:49:32","v":12573346},{"t":"2026-04-14 00:58:19","v":12573368},{"t":"2026-04-14 01:05:41","v":12573384},{"t":"2026-04-14 01:13:05","v":12573393},{"t":"2026-04-14 01:20:25","v":12573424},{"t":"2026-04-14 01:27:44","v":12573438},{"t":"2026-04-14 01:35:02","v":12573466},{"t":"2026-04-14 01:42:19","v":12573479},{"t":"2026-04-14 01:49:43","v":12573551},{"t":"2026-04-14 01:57:00","v":12573574},{"t":"2026-04-14 02:04:19","v":12573599},{"t":"2026-04-14 02:11:40","v":12573606},{"t":"2026-04-14 02:19:05","v":12573617},{"t":"2026-04-14 02:26:42","v":12573650},{"t":"2026-04-14 02:34:01","v":12573695},{"t":"2026-04-14 02:42:51","v":12573710},{"t":"2026-04-14 02:51:17","v":12573745},{"t":"2026-04-14 02:58:32","v":12573752},{"t":"2026-04-14 03:05:58","v":12573775},{"t":"2026-04-14 03:13:15","v":12573781},{"t":"2026-04-14 03:20:38","v":12573790},{"t":"2026-04-14 03:27:56","v":12573804},{"t":"2026-04-14 03:35:22","v":12573804},{"t":"2026-04-14 03:42:39","v":12573833},{"t":"2026-04-14 03:49:56","v":12573861},{"t":"2026-04-14 03:58:45","v":12573833},{"t":"2026-04-14 04:05:59","v":12573871},{"t":"2026-04-14 04:13:12","v":12573891},{"t":"2026-04-14 04:20:26","v":12573910},{"t":"2026-04-14 04:27:40","v":12573910},{"t":"2026-04-14 04:34:53","v":12573926}],"totalGain":805,"latestViews":12573926},{"title":"BINI | 'Blush' Official Music Video","url":"https://www.youtube.com/watch?v=-YDGXZT9uGw","data":[{"t":"2026-04-14 00:03:49","v":908435},{"t":"2026-04-14 00:11:32","v":908986},{"t":"2026-04-14 00:19:11","v":909159},{"t":"2026-04-14 00:26:45","v":909904},{"t":"2026-04-14 00:34:32","v":910623},{"t":"2026-04-14 00:42:03","v":910939},{"t":"2026-04-14 00:49:32","v":911856},{"t":"2026-04-14 00:58:19","v":912248},{"t":"2026-04-14 01:05:41","v":912527},{"t":"2026-04-14 01:13:05","v":912643},{"t":"2026-04-14 01:20:25","v":913095},{"t":"2026-04-14 01:27:44","v":913267},{"t":"2026-04-14 01:35:02","v":913709},{"t":"2026-04-14 01:42:19","v":913923},{"t":"2026-04-14 01:49:43","v":914711},{"t":"2026-04-14 01:57:00","v":915042},{"t":"2026-04-14 02:04:19","v":915324},{"t":"2026-04-14 02:11:40","v":915549},{"t":"2026-04-14 02:19:05","v":915717},{"t":"2026-04-14 02:26:42","v":916268},{"t":"2026-04-14 02:34:01","v":916456},{"t":"2026-04-14 02:42:51","v":916820},{"t":"2026-04-14 02:51:17","v":917175},{"t":"2026-04-14 02:58:32","v":917319},{"t":"2026-04-14 03:05:58","v":917498},{"t":"2026-04-14 03:13:15","v":917536},{"t":"2026-04-14 03:20:38","v":917766},{"t":"2026-04-14 03:27:56","v":917908},{"t":"2026-04-14 03:35:22","v":918218},{"t":"2026-04-14 03:42:39","v":918400},{"t":"2026-04-14 03:49:56","v":918749},{"t":"2026-04-14 03:58:45","v":918886},{"t":"2026-04-14 04:05:59","v":919106},{"t":"2026-04-14 04:13:12","v":919161},{"t":"2026-04-14 04:20:26","v":919517},{"t":"2026-04-14 04:27:40","v":919639},{"t":"2026-04-14 04:34:53","v":919819}],"totalGain":11384,"latestViews":919819},{"title":"Rob Deniel - Nandito Ako (Performance Video)","url":"https://www.youtube.com/watch?v=ULBo34-UhWk","data":[{"t":"2026-04-14 00:03:49","v":6783341},{"t":"2026-04-14 04:34:53","v":6785043}],"totalGain":1702,"latestViews":6785043},{"title":"BINI - 'TOP' Official Music Video","url":"https://www.youtube.com/watch?v=FjV1yHuNFMk","data":[{"t":"2026-04-14 00:03:49","v":6783188},{"t":"2026-04-14 04:34:53","v":6783713}],"totalGain":525,"latestViews":6783713},{"title":"Rob Deniel - Ikaw Sana (Performance Video)","url":"https://www.youtube.com/watch?v=wPRGVKlDCss","data":[{"t":"2026-04-14 00:03:49","v":5084788},{"t":"2026-04-14 04:34:53","v":5085592}],"totalGain":804,"latestViews":5085592},{"title":"Born To Win | Official Music Video | BINI","url":"https://www.youtube.com/watch?v=cUMH4XhQTGI","data":[{"t":"2026-04-14 00:03:49","v":4774638},{"t":"2026-04-14 04:34:53","v":4774992}],"totalGain":354,"latestViews":4774992},{"title":"'Golden Arrow' Official Music Video | #BINI","url":"https://www.youtube.com/watch?v=beaF9FnJ1IA","data":[{"t":"2026-04-14 00:03:49","v":4309594},{"t":"2026-04-14 04:34:53","v":4309897}],"totalGain":303,"latestViews":4309897},{"title":"Rob Deniel - Wala Na Bang Pag-ibig (Performance Video)","url":"https://www.youtube.com/watch?v=mlBBByuabvo","data":[{"t":"2026-04-14 00:03:49","v":3852960},{"t":"2026-04-14 04:34:53","v":3853664}],"totalGain":704,"latestViews":3853664},{"title":"BINI | 'First Luv' Official Music Video","url":"https://www.youtube.com/watch?v=P9cMi4PdHYE","data":[{"t":"2026-04-14 00:03:49","v":3645804},{"t":"2026-04-14 04:34:53","v":3646736}],"totalGain":932,"latestViews":3646736},{"title":"BINI | 'Zero Pressure' Official Performance Video","url":"https://www.youtube.com/watch?v=FxtrOYx2b_U","data":[{"t":"2026-04-14 00:03:49","v":3536276},{"t":"2026-04-14 04:34:53","v":3537513}],"totalGain":1237,"latestViews":3537513},{"title":"BINI | 'Shagidi' Official Music Video","url":"https://www.youtube.com/watch?v=LpQXPbuwBCM","data":[{"t":"2026-04-14 00:03:49","v":3127370},{"t":"2026-04-14 04:34:53","v":3128802}],"totalGain":1432,"latestViews":3128802},{"title":"BINI | 'Sweet Tooth' Official Music Video","url":"https://www.youtube.com/watch?v=OMUUMlRpc-8","data":[{"t":"2026-04-14 00:03:49","v":2627494},{"t":"2026-04-14 04:34:53","v":2628764}],"totalGain":1270,"latestViews":2628764},{"title":"BINI | 'Out Of My Head' Official Lyric Video","url":"https://www.youtube.com/watch?v=gLg44RqcR2k","data":[{"t":"2026-04-14 00:03:49","v":2231792},{"t":"2026-04-14 04:34:53","v":2232707}],"totalGain":915,"latestViews":2232707},{"title":"BINI | 'Unang Kilig' Official Music Video","url":"https://www.youtube.com/watch?v=-p6gkXM3sac","data":[{"t":"2026-04-14 00:03:49","v":1211507},{"t":"2026-04-14 04:34:53","v":1213557}],"totalGain":2050,"latestViews":1213557},{"title":"BINI | 'Bikini' Dance Practice","url":"https://www.youtube.com/watch?v=xfNUsnBryfA","data":[{"t":"2026-04-14 00:03:49","v":1937399},{"t":"2026-04-14 04:34:53","v":1939146}],"totalGain":1747,"latestViews":1939146},{"title":"BINI | 'Bikini' Official Live Performance Video","url":"https://www.youtube.com/watch?v=QutpP4_ulKE","data":[{"t":"2026-04-14 00:03:49","v":1215142},{"t":"2026-04-14 04:34:53","v":1216842}],"totalGain":1700,"latestViews":1216842},{"title":"KAIA 'TANGA' Official Music Video","url":"https://www.youtube.com/watch?v=jY5--PXuAx0","data":[{"t":"2026-04-14 00:03:49","v":859537},{"t":"2026-04-14 04:34:53","v":859675}],"totalGain":138,"latestViews":859675},{"title":"G22 - 'Pa-Pa-Pa-Palaban' Official MV","url":"https://www.youtube.com/watch?v=2qWput7UA7c","data":[{"t":"2026-04-14 00:03:49","v":1390202},{"t":"2026-04-14 04:34:53","v":1390309}],"totalGain":107,"latestViews":1390309},{"title":"ALAMAT - 'LuzViMinda' (Official M/V)","url":"https://www.youtube.com/watch?v=FJ08iNx5b_A","data":[{"t":"2026-04-14 00:03:49","v":479080},{"t":"2026-04-14 04:34:53","v":479185}],"totalGain":105,"latestViews":479185},{"title":"BINI | 'Honey Honey' Official Lyric Video","url":"https://www.youtube.com/watch?v=EKAk17_N1Jo","data":[{"t":"2026-04-14 00:03:49","v":429118},{"t":"2026-04-14 04:34:53","v":429720}],"totalGain":602,"latestViews":429720},{"title":"KAIA 'Walang Biruan' Official Music Video","url":"https://www.youtube.com/watch?v=i7b-r5yszw0","data":[{"t":"2026-04-14 00:03:49","v":479669},{"t":"2026-04-14 04:34:53","v":479710}],"totalGain":41,"latestViews":479710},{"title":"BINI | 'Unang Kilig' Official Lyric Video","url":"https://www.youtube.com/watch?v=bG4DW7r6Ek4","data":[{"t":"2026-04-14 00:03:49","v":232545},{"t":"2026-04-14 04:34:53","v":233110}],"totalGain":565,"latestViews":233110},{"title":"YARA 'Sabi Ko Na' Official Music Video","url":"https://www.youtube.com/watch?v=ESg0J0Ks4io","data":[{"t":"2026-04-14 00:03:49","v":25561},{"t":"2026-04-14 04:34:53","v":25563}],"totalGain":2,"latestViews":25563}];
+/* ── STATE ── */
+let allSnaps     = [];   // [{date, rows}]
+let videoMap     = {};   // url → {title,url,series:[{ts,v}]}
+let filtered     = [];   // computed after filter+sort
+let selUrls      = [];
+let sortKey      = 'totalGain';
+let chartMode    = 'absolute';
+let aggMode      = 'hourly';
+let fromDate     = '';
+let toDate       = '';
+let chart        = null;
 
-// Extend with all the detailed ones from the full dataset
-const FULL_DATA = JSON.parse(`[{"title":"#BINI : Pantropiko Performance Video | BINI","url":"https://www.youtube.com/watch?v=Zx31bB2vMns","data":[{"t":"2026-04-14 00:03:49","v":120032307},{"t":"2026-04-14 00:11:32","v":120032368},{"t":"2026-04-14 00:19:11","v":120032511},{"t":"2026-04-14 00:26:45","v":120032920},{"t":"2026-04-14 00:34:32","v":120033331},{"t":"2026-04-14 00:42:03","v":120033314},{"t":"2026-04-14 00:49:32","v":120033779},{"t":"2026-04-14 00:58:19","v":120034010},{"t":"2026-04-14 01:05:41","v":120034214},{"t":"2026-04-14 01:13:05","v":120034323},{"t":"2026-04-14 01:20:25","v":120034543},{"t":"2026-04-14 01:27:44","v":120034695},{"t":"2026-04-14 01:35:02","v":120034845},{"t":"2026-04-14 01:42:19","v":120034989},{"t":"2026-04-14 01:49:43","v":120035357},{"t":"2026-04-14 01:57:00","v":120035601},{"t":"2026-04-14 02:04:19","v":120035784},{"t":"2026-04-14 02:11:40","v":120035855},{"t":"2026-04-14 02:19:05","v":120036104},{"t":"2026-04-14 02:26:42","v":120036286},{"t":"2026-04-14 02:34:01","v":120036521},{"t":"2026-04-14 02:42:51","v":120036635},{"t":"2026-04-14 02:51:17","v":120036802},{"t":"2026-04-14 02:58:32","v":120036880},{"t":"2026-04-14 03:05:58","v":120037002},{"t":"2026-04-14 03:13:15","v":120037049},{"t":"2026-04-14 03:20:38","v":120037209},{"t":"2026-04-14 03:27:56","v":120037291},{"t":"2026-04-14 03:35:22","v":120037420},{"t":"2026-04-14 03:42:39","v":120037536},{"t":"2026-04-14 03:49:56","v":120037700},{"t":"2026-04-14 03:58:45","v":120037852},{"t":"2026-04-14 04:05:59","v":120037903},{"t":"2026-04-14 04:13:12","v":120037931},{"t":"2026-04-14 04:20:26","v":120038105},{"t":"2026-04-14 04:27:40","v":120038194},{"t":"2026-04-14 04:34:53","v":120038296}],"totalGain":5989,"latestViews":120038296},{"title":"BINI | \u2019Salamin, Salamin\u2019 Official Music Video","url":"https://www.youtube.com/watch?v=J1Ip2sC_lss","data":[{"t":"2026-04-14 00:03:49","v":93952136},{"t":"2026-04-14 00:11:32","v":93952182},{"t":"2026-04-14 00:19:11","v":93952306},{"t":"2026-04-14 00:26:45","v":93952406},{"t":"2026-04-14 00:34:32","v":93952582},{"t":"2026-04-14 00:42:03","v":93952731},{"t":"2026-04-14 00:49:32","v":93952971},{"t":"2026-04-14 00:58:19","v":93953141},{"t":"2026-04-14 01:05:41","v":93953174},{"t":"2026-04-14 01:13:05","v":93953216},{"t":"2026-04-14 01:20:25","v":93953327},{"t":"2026-04-14 01:27:44","v":93953385},{"t":"2026-04-14 01:35:02","v":93953481},{"t":"2026-04-14 01:42:19","v":93953555},{"t":"2026-04-14 01:49:43","v":93953723},{"t":"2026-04-14 01:57:00","v":93953823},{"t":"2026-04-14 02:04:19","v":93953935},{"t":"2026-04-14 02:11:40","v":93953962},{"t":"2026-04-14 02:19:05","v":93954058},{"t":"2026-04-14 02:26:42","v":93954124},{"t":"2026-04-14 02:34:01","v":93954227},{"t":"2026-04-14 02:42:51","v":93954334},{"t":"2026-04-14 02:51:17","v":93954380},{"t":"2026-04-14 02:58:32","v":93954439},{"t":"2026-04-14 03:05:58","v":93954456},{"t":"2026-04-14 03:13:15","v":93954510},{"t":"2026-04-14 03:20:38","v":93954551},{"t":"2026-04-14 03:27:56","v":93954609},{"t":"2026-04-14 03:35:22","v":93954650},{"t":"2026-04-14 03:42:39","v":93954701},{"t":"2026-04-14 03:49:56","v":93954794},{"t":"2026-04-14 03:58:45","v":93954847},{"t":"2026-04-14 04:05:59","v":93954886},{"t":"2026-04-14 04:13:12","v":93954964},{"t":"2026-04-14 04:20:26","v":93955010},{"t":"2026-04-14 04:27:40","v":93955038},{"t":"2026-04-14 04:34:53","v":93955083}],"totalGain":2947,"latestViews":93955083},{"title":"BINI | \u2019Cherry On Top\u2019 Official Music Video","url":"https://www.youtube.com/watch?v=wufUX5P2Ds8","data":[{"t":"2026-04-14 00:03:49","v":58512174},{"t":"2026-04-14 00:11:32","v":58512223},{"t":"2026-04-14 00:19:11","v":58512340},{"t":"2026-04-14 00:26:45","v":58512453},{"t":"2026-04-14 00:34:32","v":58512672},{"t":"2026-04-14 00:42:03","v":58512744},{"t":"2026-04-14 00:49:32","v":58512948},{"t":"2026-04-14 00:58:19","v":58513120},{"t":"2026-04-14 01:05:41","v":58513164},{"t":"2026-04-14 01:13:05","v":58513259},{"t":"2026-04-14 01:20:25","v":58513325},{"t":"2026-04-14 01:27:44","v":58513397},{"t":"2026-04-14 01:35:02","v":58513458},{"t":"2026-04-14 01:42:19","v":58513550},{"t":"2026-04-14 01:49:43","v":58513628},{"t":"2026-04-14 01:57:00","v":58513720},{"t":"2026-04-14 02:04:19","v":58513832},{"t":"2026-04-14 02:11:40","v":58513857},{"t":"2026-04-14 02:19:05","v":58513964},{"t":"2026-04-14 02:26:42","v":58514014},{"t":"2026-04-14 02:34:01","v":58514143},{"t":"2026-04-14 02:42:51","v":58514239},{"t":"2026-04-14 02:51:17","v":58514280},{"t":"2026-04-14 02:58:32","v":58514353},{"t":"2026-04-14 03:05:58","v":58514367},{"t":"2026-04-14 03:13:15","v":58514425},{"t":"2026-04-14 03:20:38","v":58514453},{"t":"2026-04-14 03:27:56","v":58514522},{"t":"2026-04-14 03:35:22","v":58514558},{"t":"2026-04-14 03:42:39","v":58514633},{"t":"2026-04-14 03:49:56","v":58514664},{"t":"2026-04-14 03:58:45","v":58514718},{"t":"2026-04-14 04:05:59","v":58514739},{"t":"2026-04-14 04:13:12","v":58514804},{"t":"2026-04-14 04:20:26","v":58514844},{"t":"2026-04-14 04:27:40","v":58514905},{"t":"2026-04-14 04:34:53","v":58514928}],"totalGain":2754,"latestViews":58514928},{"title":"Karera Official Music Video | BINI","url":"https://www.youtube.com/watch?v=QNV2DmBxChQ","data":[{"t":"2026-04-14 00:03:49","v":34405505},{"t":"2026-04-14 00:11:32","v":34405565},{"t":"2026-04-14 00:19:11","v":34405547},{"t":"2026-04-14 00:26:45","v":34405669},{"t":"2026-04-14 00:34:32","v":34405756},{"t":"2026-04-14 00:42:03","v":34405848},{"t":"2026-04-14 00:49:32","v":34405916},{"t":"2026-04-14 00:58:19","v":34406002},{"t":"2026-04-14 01:05:41","v":34406029},{"t":"2026-04-14 01:13:05","v":34406105},{"t":"2026-04-14 01:20:25","v":34406149},{"t":"2026-04-14 01:27:44","v":34406207},{"t":"2026-04-14 01:35:02","v":34406253},{"t":"2026-04-14 01:42:19","v":34406330},{"t":"2026-04-14 01:49:43","v":34406385},{"t":"2026-04-14 01:57:00","v":34406499},{"t":"2026-04-14 02:04:19","v":34406521},{"t":"2026-04-14 02:11:40","v":34406562},{"t":"2026-04-14 02:19:05","v":34406612},{"t":"2026-04-14 02:26:42","v":34406676},{"t":"2026-04-14 02:34:01","v":34406715},{"t":"2026-04-14 02:42:51","v":34406793},{"t":"2026-04-14 02:51:17","v":34406831},{"t":"2026-04-14 02:58:32","v":34406877},{"t":"2026-04-14 03:05:58","v":34406885},{"t":"2026-04-14 03:13:15","v":34406932},{"t":"2026-04-14 03:20:38","v":34406946},{"t":"2026-04-14 03:27:56","v":34406994},{"t":"2026-04-14 03:35:22","v":34407008},{"t":"2026-04-14 03:42:39","v":34407063},{"t":"2026-04-14 03:49:56","v":34407086},{"t":"2026-04-14 03:58:45","v":34407127},{"t":"2026-04-14 04:05:59","v":34407136},{"t":"2026-04-14 04:13:12","v":34407191},{"t":"2026-04-14 04:20:26","v":34407222},{"t":"2026-04-14 04:27:40","v":34407251},{"t":"2026-04-14 04:34:53","v":34407263}],"totalGain":1758,"latestViews":34407263},{"title":"BINI : \u2018Salamin, Salamin\u2019 Dance Practice","url":"https://www.youtube.com/watch?v=lY87lr0twyk","data":[{"t":"2026-04-14 00:03:49","v":31528518},{"t":"2026-04-14 04:34:53","v":31529501}],"totalGain":983,"latestViews":31529501},{"title":"Lagi | Official Music Video | #BINI","url":"https://www.youtube.com/watch?v=KyndoXN4_ns","data":[{"t":"2026-04-14 00:03:49","v":30591110},{"t":"2026-04-14 04:34:53","v":30592267}],"totalGain":1157,"latestViews":30592267},{"title":"BINI | \u2018Blink Twice\u2019 Official Music Video","url":"https://www.youtube.com/watch?v=PlySXiQDGsM","data":[{"t":"2026-04-14 00:03:49","v":23732504},{"t":"2026-04-14 04:34:53","v":23734403}],"totalGain":1899,"latestViews":23734403},{"title":"Na Na Na | Official Music Video | #BINI","url":"https://www.youtube.com/watch?v=wJ6GCeSR4ss","data":[{"t":"2026-04-14 00:03:49","v":19485311},{"t":"2026-04-14 04:34:53","v":19486183}],"totalGain":872,"latestViews":19486183},{"title":"Da Coconut Nut (Official Music Video) | BINI TV","url":"https://www.youtube.com/watch?v=eZfeW9WDwmA","data":[{"t":"2026-04-14 00:03:49","v":12666844},{"t":"2026-04-14 04:34:53","v":12667471}],"totalGain":627,"latestViews":12667471},{"title":"Strings Official Music Video | BINI","url":"https://www.youtube.com/watch?v=OGBS-8IsPJ0","data":[{"t":"2026-04-14 00:03:49","v":12573121},{"t":"2026-04-14 04:34:53","v":12573926}],"totalGain":805,"latestViews":12573926},{"title":"#BINI : \u2018I Feel Good\u2019 Official Music Video","url":"https://www.youtube.com/watch?v=UMogVGvhs7U","data":[{"t":"2026-04-14 00:03:49","v":12309900},{"t":"2026-04-14 04:34:53","v":12310633}],"totalGain":733,"latestViews":12310633},{"title":"BINI | \u2018Blush\u2019 Official Music Video","url":"https://www.youtube.com/watch?v=-YDGXZT9uGw","data":[{"t":"2026-04-14 00:03:49","v":908435},{"t":"2026-04-14 00:11:32","v":908986},{"t":"2026-04-14 00:19:11","v":909159},{"t":"2026-04-14 00:26:45","v":909904},{"t":"2026-04-14 00:34:32","v":910623},{"t":"2026-04-14 00:42:03","v":910939},{"t":"2026-04-14 00:49:32","v":911856},{"t":"2026-04-14 00:58:19","v":912248},{"t":"2026-04-14 01:05:41","v":912527},{"t":"2026-04-14 01:13:05","v":912643},{"t":"2026-04-14 01:20:25","v":913095},{"t":"2026-04-14 01:27:44","v":913267},{"t":"2026-04-14 01:35:02","v":913709},{"t":"2026-04-14 01:42:19","v":913923},{"t":"2026-04-14 01:49:43","v":914711},{"t":"2026-04-14 01:57:00","v":915042},{"t":"2026-04-14 02:04:19","v":915324},{"t":"2026-04-14 02:11:40","v":915549},{"t":"2026-04-14 02:19:05","v":915717},{"t":"2026-04-14 02:26:42","v":916268},{"t":"2026-04-14 02:34:01","v":916456},{"t":"2026-04-14 02:42:51","v":916820},{"t":"2026-04-14 02:51:17","v":917175},{"t":"2026-04-14 02:58:32","v":917319},{"t":"2026-04-14 03:05:58","v":917498},{"t":"2026-04-14 03:13:15","v":917536},{"t":"2026-04-14 03:20:38","v":917766},{"t":"2026-04-14 03:27:56","v":917908},{"t":"2026-04-14 03:35:22","v":918218},{"t":"2026-04-14 03:42:39","v":918400},{"t":"2026-04-14 03:49:56","v":918749},{"t":"2026-04-14 03:58:45","v":918886},{"t":"2026-04-14 04:05:59","v":919106},{"t":"2026-04-14 04:13:12","v":919161},{"t":"2026-04-14 04:20:26","v":919517},{"t":"2026-04-14 04:27:40","v":919639},{"t":"2026-04-14 04:34:53","v":919819}],"totalGain":11384,"latestViews":919819},{"title":"Rob Deniel - Nandito Ako (Performance Video)","url":"https://www.youtube.com/watch?v=ULBo34-UhWk","data":[{"t":"2026-04-14 00:03:49","v":6783341},{"t":"2026-04-14 04:34:53","v":6785043}],"totalGain":1702,"latestViews":6785043},{"title":"BINI - \u2018TOP\u2019 Official Music Video","url":"https://www.youtube.com/watch?v=FjV1yHuNFMk","data":[{"t":"2026-04-14 00:03:49","v":6783188},{"t":"2026-04-14 04:34:53","v":6783713}],"totalGain":525,"latestViews":6783713},{"title":"Rob Deniel - Ikaw Sana (Performance Video)","url":"https://www.youtube.com/watch?v=wPRGVKlDCss","data":[{"t":"2026-04-14 00:03:49","v":5084788},{"t":"2026-04-14 04:34:53","v":5085592}],"totalGain":804,"latestViews":5085592},{"title":"Born To Win | Official Music Video | BINI","url":"https://www.youtube.com/watch?v=cUMH4XhQTGI","data":[{"t":"2026-04-14 00:03:49","v":4774638},{"t":"2026-04-14 04:34:53","v":4774992}],"totalGain":354,"latestViews":4774992},{"title":"Golden Arrow Official Music Video | #BINI","url":"https://www.youtube.com/watch?v=beaF9FnJ1IA","data":[{"t":"2026-04-14 00:03:49","v":4309594},{"t":"2026-04-14 04:34:53","v":4309897}],"totalGain":303,"latestViews":4309897},{"title":"Rob Deniel - Wala Na Bang Pag-ibig (Performance Video)","url":"https://www.youtube.com/watch?v=mlBBByuabvo","data":[{"t":"2026-04-14 00:03:49","v":3852960},{"t":"2026-04-14 04:34:53","v":3853664}],"totalGain":704,"latestViews":3853664},{"title":"BINI | First Luv Official Music Video","url":"https://www.youtube.com/watch?v=P9cMi4PdHYE","data":[{"t":"2026-04-14 00:03:49","v":3645804},{"t":"2026-04-14 04:34:53","v":3646736}],"totalGain":932,"latestViews":3646736},{"title":"BINI | Zero Pressure Official Performance Video","url":"https://www.youtube.com/watch?v=FxtrOYx2b_U","data":[{"t":"2026-04-14 00:03:49","v":3536276},{"t":"2026-04-14 04:34:53","v":3537513}],"totalGain":1237,"latestViews":3537513},{"title":"BINI | Shagidi Official Music Video","url":"https://www.youtube.com/watch?v=LpQXPbuwBCM","data":[{"t":"2026-04-14 00:03:49","v":3127370},{"t":"2026-04-14 04:34:53","v":3128802}],"totalGain":1432,"latestViews":3128802},{"title":"Kapit Lang | Official Music Video | #BINI","url":"https://www.youtube.com/watch?v=vBshRG9UqyM","data":[{"t":"2026-04-14 00:03:49","v":2928127},{"t":"2026-04-14 04:34:53","v":2928293}],"totalGain":166,"latestViews":2928293},{"title":"BINI | Sweet Tooth Official Music Video","url":"https://www.youtube.com/watch?v=OMUUMlRpc-8","data":[{"t":"2026-04-14 00:03:49","v":2627494},{"t":"2026-04-14 04:34:53","v":2628764}],"totalGain":1270,"latestViews":2628764},{"title":"BINI | Out Of My Head Official Lyric Video","url":"https://www.youtube.com/watch?v=gLg44RqcR2k","data":[{"t":"2026-04-14 00:03:49","v":2231792},{"t":"2026-04-14 04:34:53","v":2232707}],"totalGain":915,"latestViews":2232707},{"title":"BINI | Bikini Dance Practice","url":"https://www.youtube.com/watch?v=xfNUsnBryfA","data":[{"t":"2026-04-14 00:03:49","v":1937399},{"t":"2026-04-14 04:34:53","v":1939146}],"totalGain":1747,"latestViews":1939146},{"title":"#BINI | Pit A Pat Special Performance Video","url":"https://www.youtube.com/watch?v=p8Mh_Fvm7HU","data":[{"t":"2026-04-14 00:03:49","v":1870636},{"t":"2026-04-14 04:34:53","v":1870724}],"totalGain":88,"latestViews":1870724},{"title":"BINI | Shagidi Official Lyric Video","url":"https://www.youtube.com/watch?v=wypqyyr6bZo","data":[{"t":"2026-04-14 00:03:49","v":1719988},{"t":"2026-04-14 04:34:53","v":1720106}],"totalGain":118,"latestViews":1720106},{"title":"Rob Deniel - Bakit Ngayon Ka Lang (Performance Video)","url":"https://www.youtube.com/watch?v=f71WjHwqn78","data":[{"t":"2026-04-14 00:03:49","v":1582233},{"t":"2026-04-14 04:34:53","v":1582472}],"totalGain":239,"latestViews":1582472},{"title":"BINI : Blink Twice Dance and Vocal Practice","url":"https://www.youtube.com/watch?v=cjq3-rRh0q4","data":[{"t":"2026-04-14 00:03:49","v":1559217},{"t":"2026-04-14 04:34:53","v":1559482}],"totalGain":265,"latestViews":1559482},{"title":"BINI | Bikini Official Lyric Video","url":"https://www.youtube.com/watch?v=5a3aR_O6I3k","data":[{"t":"2026-04-14 00:03:49","v":1544189},{"t":"2026-04-14 04:34:53","v":1544650}],"totalGain":461,"latestViews":1544650},{"title":"G22 - Pa-Pa-Pa-Palaban Official MV","url":"https://www.youtube.com/watch?v=2qWput7UA7c","data":[{"t":"2026-04-14 00:03:49","v":1390202},{"t":"2026-04-14 04:34:53","v":1390309}],"totalGain":107,"latestViews":1390309},{"title":"BINI | Bikini Official Live Performance Video","url":"https://www.youtube.com/watch?v=QutpP4_ulKE","data":[{"t":"2026-04-14 00:03:49","v":1215142},{"t":"2026-04-14 04:34:53","v":1216842}],"totalGain":1700,"latestViews":1216842},{"title":"BINI | Zero Pressure Official Lyric Video","url":"https://www.youtube.com/watch?v=agakemWlkns","data":[{"t":"2026-04-14 00:03:49","v":1215324},{"t":"2026-04-14 04:34:53","v":1215559}],"totalGain":235,"latestViews":1215559},{"title":"BINI | Unang Kilig Official Music Video","url":"https://www.youtube.com/watch?v=-p6gkXM3sac","data":[{"t":"2026-04-14 00:03:49","v":1211507},{"t":"2026-04-14 04:34:53","v":1213557}],"totalGain":2050,"latestViews":1213557},{"title":"BINI | Secrets (feat. eaJ) Official Lyric Video","url":"https://www.youtube.com/watch?v=K7lqK-oZ3ak","data":[{"t":"2026-04-14 00:03:49","v":1122119},{"t":"2026-04-14 04:34:53","v":1122421}],"totalGain":302,"latestViews":1122421},{"title":"BINI | Paruparo Official Lyric Video","url":"https://www.youtube.com/watch?v=tR2Pewg41Wg","data":[{"t":"2026-04-14 00:03:49","v":1118294},{"t":"2026-04-14 04:34:53","v":1118361}],"totalGain":67,"latestViews":1118361},{"title":"BINI | BINI : Zero Pressure Dance Practice","url":"https://www.youtube.com/watch?v=u8hrcQisGKM","data":[{"t":"2026-04-14 00:03:49","v":1080248},{"t":"2026-04-14 04:34:53","v":1080588}],"totalGain":340,"latestViews":1080588},{"title":"Kinikilig Performance Video | #BINI","url":"https://www.youtube.com/watch?v=fHVt8rdHMxE","data":[{"t":"2026-04-14 00:03:49","v":1074937},{"t":"2026-04-14 04:34:53","v":1075010}],"totalGain":73,"latestViews":1075010},{"title":"BINI | Bikini Moving Dance Practice","url":"https://www.youtube.com/watch?v=okBJcrtYOPo","data":[{"t":"2026-04-14 00:03:49","v":1049848},{"t":"2026-04-14 04:34:53","v":1050684}],"totalGain":836,"latestViews":1050684},{"title":"BINI | Katabi Official Live Performance Video","url":"https://www.youtube.com/watch?v=StJXunEzsto","data":[{"t":"2026-04-14 00:03:49","v":1038317},{"t":"2026-04-14 04:34:53","v":1038830}],"totalGain":513,"latestViews":1038830},{"title":"BINI | Infinity Official Live Performance Video","url":"https://www.youtube.com/watch?v=GG1D6ZxY-IQ","data":[{"t":"2026-04-14 00:03:49","v":974335},{"t":"2026-04-14 04:34:53","v":975115}],"totalGain":780,"latestViews":975115},{"title":"KAIA TANGA Official Music Video","url":"https://www.youtube.com/watch?v=jY5--PXuAx0","data":[{"t":"2026-04-14 00:03:49","v":859537},{"t":"2026-04-14 04:34:53","v":859675}],"totalGain":138,"latestViews":859675},{"title":"BINI | Katabi Official Lyric Video","url":"https://www.youtube.com/watch?v=8TA5I-yWvFo","data":[{"t":"2026-04-14 00:03:49","v":858413},{"t":"2026-04-14 04:34:53","v":858791}],"totalGain":378,"latestViews":858791},{"title":"BINI | Infinity Official Lyric Video","url":"https://www.youtube.com/watch?v=Ia6pKsQt2qc","data":[{"t":"2026-04-14 00:03:49","v":781684},{"t":"2026-04-14 04:34:53","v":782035}],"totalGain":351,"latestViews":782035},{"title":"BINI | First Luv Dance Practice","url":"https://www.youtube.com/watch?v=o8O0k29UF9A","data":[{"t":"2026-04-14 00:03:49","v":727352},{"t":"2026-04-14 04:34:53","v":727436}],"totalGain":84,"latestViews":727436},{"title":"G22 - Pa-Pa-Pa-Palaban Performance MV","url":"https://www.youtube.com/watch?v=xzBu4XMM6gU","data":[{"t":"2026-04-14 00:03:49","v":653068},{"t":"2026-04-14 04:34:53","v":653212}],"totalGain":144,"latestViews":653212},{"title":"BINI performs Blink Twice Live on Billboard Philippines Studios","url":"https://www.youtube.com/watch?v=89Z_fb_vFUM","data":[{"t":"2026-04-14 00:03:49","v":525917},{"t":"2026-04-14 04:34:53","v":525969}],"totalGain":52,"latestViews":525969},{"title":"BINI | First Luv Official Performance Video","url":"https://www.youtube.com/watch?v=xVQ1wIIRNoE","data":[{"t":"2026-04-14 00:03:49","v":505995},{"t":"2026-04-14 04:34:53","v":506092}],"totalGain":97,"latestViews":506092},{"title":"1621 - Bababa Official Performance Video","url":"https://www.youtube.com/watch?v=xnF_k0t2OZo","data":[{"t":"2026-04-14 00:03:49","v":501943},{"t":"2026-04-14 04:34:53","v":501998}],"totalGain":55,"latestViews":501998},{"title":"BINI | Paruparo Official Live Performance Video","url":"https://www.youtube.com/watch?v=fIqadIJDhn4","data":[{"t":"2026-04-14 00:03:49","v":490278},{"t":"2026-04-14 04:34:53","v":490742}],"totalGain":464,"latestViews":490742},{"title":"KAIA Walang Biruan Official Music Video","url":"https://www.youtube.com/watch?v=i7b-r5yszw0","data":[{"t":"2026-04-14 00:03:49","v":479669},{"t":"2026-04-14 04:34:53","v":479710}],"totalGain":41,"latestViews":479710},{"title":"ALAMAT - LuzViMinda (Official M/V)","url":"https://www.youtube.com/watch?v=FJ08iNx5b_A","data":[{"t":"2026-04-14 00:03:49","v":479080},{"t":"2026-04-14 04:34:53","v":479185}],"totalGain":105,"latestViews":479185},{"title":"BINI | Honey Honey Official Lyric Video","url":"https://www.youtube.com/watch?v=EKAk17_N1Jo","data":[{"t":"2026-04-14 00:03:49","v":429118},{"t":"2026-04-14 04:34:53","v":429720}],"totalGain":602,"latestViews":429720},{"title":"BINI | Paruparo Official Video","url":"https://www.youtube.com/watch?v=91e-X3BZ_B8","data":[{"t":"2026-04-14 00:03:49","v":299519},{"t":"2026-04-14 04:34:53","v":299642}],"totalGain":123,"latestViews":299642},{"title":"Walkie Talkie","url":"https://www.youtube.com/watch?v=SCG_UupZuXU","data":[{"t":"2026-04-14 00:03:49","v":248237},{"t":"2026-04-14 04:34:53","v":248245}],"totalGain":8,"latestViews":248245},{"title":"Tibok - Earl Agustin (Live at Viva Cafe)","url":"https://www.youtube.com/watch?v=oOkShDCbG18","data":[{"t":"2026-04-14 00:03:49","v":244696},{"t":"2026-04-14 04:34:53","v":244755}],"totalGain":59,"latestViews":244755},{"title":"BINI | Unang Kilig Official Lyric Video","url":"https://www.youtube.com/watch?v=bG4DW7r6Ek4","data":[{"t":"2026-04-14 00:03:49","v":232545},{"t":"2026-04-14 04:34:53","v":233110}],"totalGain":565,"latestViews":233110},{"title":"KAIA TANGA Official Lyric Video","url":"https://www.youtube.com/watch?v=N6bh_gBcels","data":[{"t":"2026-04-14 00:03:49","v":231549},{"t":"2026-04-14 04:34:53","v":231556}],"totalGain":7,"latestViews":231556},{"title":"KAIA performs TANGA LIVE on Wish 107.5 Bus","url":"https://www.youtube.com/watch?v=dTJp6YDlFYA","data":[{"t":"2026-04-14 00:03:49","v":212433},{"t":"2026-04-14 04:34:53","v":212468}],"totalGain":35,"latestViews":212468},{"title":"BINI x Orchestra of the Youth (OFY) - OXYGEN Lyric Video","url":"https://www.youtube.com/watch?v=mMRK5Ucs2xs","data":[{"t":"2026-04-14 00:03:49","v":204476},{"t":"2026-04-14 04:34:53","v":204502}],"totalGain":26,"latestViews":204502},{"title":"BINI | First Luv Official Lyric Video","url":"https://www.youtube.com/watch?v=HGao5OGEm4s","data":[{"t":"2026-04-14 00:03:49","v":180034},{"t":"2026-04-14 04:34:53","v":180106}],"totalGain":72,"latestViews":180106},{"title":"Press Hit Play - Pansamantala (Official Music Film)","url":"https://www.youtube.com/watch?v=rsY7Ol5IZV8","data":[{"t":"2026-04-14 00:03:49","v":163317},{"t":"2026-04-14 04:34:53","v":163322}],"totalGain":5,"latestViews":163322},{"title":"G22 - Filipina Queen Live Performance Music Video","url":"https://www.youtube.com/watch?v=-ZXSD18uri0","data":[{"t":"2026-04-14 00:03:49","v":143971},{"t":"2026-04-14 04:34:53","v":143995}],"totalGain":24,"latestViews":143995},{"title":"VVINK - Tulala Official MV","url":"https://www.youtube.com/watch?v=kHZRyNhb41E","data":[{"t":"2026-04-14 00:03:49","v":139009},{"t":"2026-04-14 04:34:53","v":139035}],"totalGain":26,"latestViews":139035},{"title":"VVINK & DJ Love (feat. Pio Balbuena) - Baduy Official MV","url":"https://www.youtube.com/watch?v=sbkgLCxNs9k","data":[{"t":"2026-04-14 00:03:49","v":130521},{"t":"2026-04-14 04:34:53","v":130558}],"totalGain":37,"latestViews":130558},{"title":"Walang Biruan (Live at The Cozy Cove) - KAIA","url":"https://www.youtube.com/watch?v=EepNXI_GzC8","data":[{"t":"2026-04-14 00:03:49","v":130458},{"t":"2026-04-14 04:34:53","v":130498}],"totalGain":40,"latestViews":130498},{"title":"YOU DID IT (Live at The Cozy Cove) - KAIA","url":"https://www.youtube.com/watch?v=VpvCC4gXOno","data":[{"t":"2026-04-14 00:03:49","v":99612},{"t":"2026-04-14 04:34:53","v":99621}],"totalGain":9,"latestViews":99621},{"title":"KAIA performs Walang Biruan LIVE on Wish 107.5 Bus","url":"https://www.youtube.com/watch?v=iqySVDyhTVs","data":[{"t":"2026-04-14 00:03:49","v":89133},{"t":"2026-04-14 04:34:53","v":89137}],"totalGain":4,"latestViews":89137},{"title":"G22 - Filipina Queen (Lyric Visualizer)","url":"https://www.youtube.com/watch?v=4xCqZpWTl6c","data":[{"t":"2026-04-14 00:03:49","v":78215},{"t":"2026-04-14 04:34:53","v":78218}],"totalGain":3,"latestViews":78218},{"title":"G22 - Pa-Pa-Pa-Palaban (Official Lyric Visualizer)","url":"https://www.youtube.com/watch?v=q35eF4UdQiQ","data":[{"t":"2026-04-14 00:03:49","v":73429},{"t":"2026-04-14 04:34:53","v":73437}],"totalGain":8,"latestViews":73437},{"title":"VVINK - Tatlong Hiling Official Music Video","url":"https://www.youtube.com/watch?v=zeVtzNRXr8g","data":[{"t":"2026-04-14 00:03:49","v":32925},{"t":"2026-04-14 04:34:53","v":32931}],"totalGain":6,"latestViews":32931},{"title":"YARA Sabi Ko Na Official Music Video","url":"https://www.youtube.com/watch?v=ESg0J0Ks4io","data":[{"t":"2026-04-14 00:03:49","v":25561},{"t":"2026-04-14 04:34:53","v":25563}],"totalGain":2,"latestViews":25563},{"title":"G22 Behind: Puregold OPM Con 2025 (Part 1)","url":"https://www.youtube.com/watch?v=tI-fyEtD4es","data":[{"t":"2026-04-14 00:03:49","v":23336},{"t":"2026-04-14 04:34:53","v":23336}],"totalGain":0,"latestViews":23336},{"title":"G22 - Pa-Pa-Pa-Palaban and Filipina Queen Fancam","url":"https://www.youtube.com/watch?v=z8zkv6u5NRA","data":[{"t":"2026-04-14 00:03:49","v":21363},{"t":"2026-04-14 04:34:53","v":21364}],"totalGain":1,"latestViews":21364},{"title":"G22 - Filipina Queen (Official Audio)","url":"https://www.youtube.com/watch?v=DYp3IX3bX8M","data":[{"t":"2026-04-14 00:03:49","v":18737},{"t":"2026-04-14 04:34:53","v":18737}],"totalGain":0,"latestViews":18737},{"title":"Ziv, KAIA - Walkie Talkie (Official Lyric Video)","url":"https://www.youtube.com/watch?v=lF7JeE9nc9Y","data":[{"t":"2026-04-14 00:03:49","v":17009},{"t":"2026-04-14 04:34:53","v":17017}],"totalGain":8,"latestViews":17017},{"title":"VVINK - Tulala Choreography Video","url":"https://www.youtube.com/watch?v=ocTnGVhC-lc","data":[{"t":"2026-04-14 00:03:49","v":12535},{"t":"2026-04-14 04:34:53","v":12537}],"totalGain":2,"latestViews":12537},{"title":"VVINK - Tatlong Hiling Official Lyric Video","url":"https://www.youtube.com/watch?v=eQmAm_NUJiY","data":[{"t":"2026-04-14 00:03:49","v":8867},{"t":"2026-04-14 04:34:53","v":8867}],"totalGain":0,"latestViews":8867},{"title":"VVINK - KINDAT PERFORMANCE VIDEO","url":"https://www.youtube.com/watch?v=RrtAlr1Xk1I","data":[{"t":"2026-04-14 00:03:49","v":7494},{"t":"2026-04-14 04:34:53","v":7499}],"totalGain":5,"latestViews":7499},{"title":"G22 Behind: Filipina Queen The Making","url":"https://www.youtube.com/watch?v=KokQ40Vv65M","data":[{"t":"2026-04-14 00:03:49","v":7428},{"t":"2026-04-14 04:34:53","v":7429}],"totalGain":1,"latestViews":7429},{"title":"G22 at OPM CON 2025 (Fancam with Yeng Constantino)","url":"https://www.youtube.com/watch?v=rXGAlCaEZNs","data":[{"t":"2026-04-14 00:03:49","v":6502},{"t":"2026-04-14 04:34:53","v":6503}],"totalGain":1,"latestViews":6503},{"title":"G22 - Filipina Queen LIVE Performance MV TEASER","url":"https://www.youtube.com/watch?v=KySUN3QSTog","data":[{"t":"2026-04-14 00:03:49","v":5867},{"t":"2026-04-14 04:34:53","v":5867}],"totalGain":0,"latestViews":5867},{"title":"G22 Behind: Billboard PH Cover Shoot","url":"https://www.youtube.com/watch?v=QjBTixtGpjQ","data":[{"t":"2026-04-14 00:03:49","v":5699},{"t":"2026-04-14 04:34:53","v":5699}],"totalGain":0,"latestViews":5699},{"title":"VVINK - Tatlong Hiling Choreography Video","url":"https://www.youtube.com/watch?v=o4QsqBYKuek","data":[{"t":"2026-04-14 00:03:49","v":5378},{"t":"2026-04-14 04:34:53","v":5378}],"totalGain":0,"latestViews":5378},{"title":"G22 at OPM CON 2025 (Filipina Queen Performance Fancam)","url":"https://www.youtube.com/watch?v=rIjt1vs3SZs","data":[{"t":"2026-04-14 00:03:49","v":5322},{"t":"2026-04-14 04:34:53","v":5321}],"totalGain":-1,"latestViews":5321},{"title":"YARA Sabi Ko Na Official Lyric Video","url":"https://www.youtube.com/watch?v=SSotUEOZl-0","data":[{"t":"2026-04-14 00:03:49","v":5059},{"t":"2026-04-14 04:34:53","v":5060}],"totalGain":1,"latestViews":5060},{"title":"G22 Behind: Billboard PH Studios Performance","url":"https://www.youtube.com/watch?v=k0VKjyH8HP0","data":[{"t":"2026-04-14 00:03:49","v":3396},{"t":"2026-04-14 04:34:53","v":3397}],"totalGain":1,"latestViews":3397},{"title":"VVINK - Tatlong Hiling Performance Video","url":"https://www.youtube.com/watch?v=iRFnD1hfHkU","data":[{"t":"2026-04-14 00:03:49","v":3239},{"t":"2026-04-14 04:34:53","v":3240}],"totalGain":1,"latestViews":3240},{"title":"G22 - Filipina Queen (Fancam at Pahinungod Festival 2025)","url":"https://www.youtube.com/watch?v=DxcmsTuk50Y","data":[{"t":"2026-04-14 00:03:49","v":2940},{"t":"2026-04-14 04:34:53","v":2941}],"totalGain":1,"latestViews":2941}]`);
-
-// Use FULL_DATA as main source
-const videos = FULL_DATA;
-
-// --- State ---
-let selectedUrls = [];
-let currentSort = 'totalGain';
-let currentMode = 'absolute';
-let searchQuery = '';
-let mainChart = null;
-
-// --- Helpers ---
-function fmtNum(n) {
-  if (n >= 1e9) return (n/1e9).toFixed(2) + 'B';
-  if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
-  if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+/* ── HELPERS ── */
+const fmt = n => {
+  if (n == null || isNaN(n)) return '—';
+  const a = Math.abs(n);
+  if (a >= 1e9) return (n/1e9).toFixed(2)+'B';
+  if (a >= 1e6) return (n/1e6).toFixed(2)+'M';
+  if (a >= 1e3) return (n/1e3).toFixed(1)+'K';
   return n.toLocaleString();
+};
+const fmtGain = g => g == null ? '—' : (g>=0?'+':'')+fmt(g);
+const vidId   = u => ((u||'').match(/v=([^&]+)/)||[])[1]||'';
+const dStr    = d => d.toISOString().slice(0,10);
+const pad2    = n => String(n).padStart(2,'0');
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const hdr = lines[0].split(',').map(h=>h.trim());
+  return lines.slice(1).map(line => {
+    const cols=[]; let cur='', inQ=false;
+    for (const ch of line) {
+      if (ch==='"') { inQ=!inQ; }
+      else if (ch===',' && !inQ) { cols.push(cur); cur=''; }
+      else cur+=ch;
+    }
+    cols.push(cur);
+    const o={};
+    hdr.forEach((h,i) => o[h]=(cols[i]||'').trim());
+    return o;
+  });
 }
 
-function fmtGain(g) {
-  const s = g >= 0 ? '+' : '';
-  return s + fmtNum(g);
-}
+function toDate(ts) { return new Date(ts.replace(' ','T')); }
 
-function getVideoId(url) {
-  const m = url.match(/v=([^&]+)/);
-  return m ? m[1] : '';
-}
-
-// --- Stats ---
-function updateStats() {
-  const totalViews = videos.reduce((s, v) => s + v.latestViews, 0);
-  const topVideo = videos.reduce((a, b) => a.latestViews > b.latestViews ? a : b);
-  const fastestVideo = videos.reduce((a, b) => a.totalGain > b.totalGain ? a : b);
-
-  document.getElementById('statVideos').textContent = videos.length;
-  document.getElementById('statTop').textContent = fmtNum(topVideo.latestViews);
-  document.getElementById('statFastest').textContent = '+' + fmtNum(fastestVideo.totalGain);
-  document.getElementById('statTotal').textContent = fmtNum(totalViews);
-}
-
-// --- Chart ---
-function getLabels() {
-  const ref = videos.find(v => v.data.length > 5) || videos[0];
-  return ref.data.map(d => d.t.split(' ')[1]);
-}
-
-function getChartData(video) {
-  if (currentMode === 'growth') {
-    const base = video.data[0].v;
-    return video.data.map(d => d.v - base);
+/* Bucket key for aggregation */
+function bKey(ts, agg) {
+  const d = toDate(ts);
+  if (isNaN(d)) return ts;
+  switch(agg) {
+    case 'hourly':  return `${dStr(d)} ${pad2(d.getHours())}:00`;
+    case 'daily':   return dStr(d);
+    case 'monthly': return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`;
+    case 'yearly':  return `${d.getFullYear()}`;
   }
-  return video.data.map(d => d.v);
+  return ts;
+}
+/* Human label from bucket key */
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function bLabel(key, agg) {
+  switch(agg) {
+    case 'hourly':  return key;   // "2025-08-03 14:00"
+    case 'daily':   return key;   // "2025-08-03"
+    case 'monthly': {
+      const [yr,mo] = key.split('-');
+      return `${MONTHS[parseInt(mo)-1]} ${yr}`;
+    }
+    case 'yearly':  return key;
+  }
+  return key;
 }
 
+/* ── GENERATE DATE LIST ── */
+function genDates() {
+  const dates=[], start=new Date(DATA_START), end=new Date();
+  end.setHours(0,0,0,0);
+  for (let d=new Date(start); d<=end; d.setDate(d.getDate()+1))
+    dates.push(dStr(new Date(d)));
+  return dates;
+}
+
+/* ── FETCH + PARSE ── */
+async function tryFetch(url) {
+  try { const r=await fetch(url); return r.ok ? await r.text() : null; }
+  catch { return null; }
+}
+
+async function loadAll() {
+  setSub('Generating file list…');
+  const dates = genDates();
+  const total = dates.length;
+  let loaded  = 0;
+  allSnaps    = [];
+
+  const BATCH = 10;
+  for (let i=0; i<total; i+=BATCH) {
+    const batch = dates.slice(i, i+BATCH);
+    const res = await Promise.all(batch.map(async date => {
+      const text = await tryFetch(`${DATA_DIR}${FILE_PFX}${date}.csv`);
+      loaded++;
+      if (loaded % 10 === 0 || loaded === total)
+        setSub(`Fetched ${loaded}/${total} files · found ${allSnaps.length} with data`);
+      if (!text) return null;
+      const rows = parseCSV(text);
+      return rows.length ? { date, rows } : null;
+    }));
+    res.forEach(r => r && allSnaps.push(r));
+  }
+
+  /* Build videoMap */
+  videoMap = {};
+  allSnaps.forEach(snap => {
+    snap.rows.forEach(row => {
+      const url   = (row['URL']   || row['url']   || '').trim();
+      const title = (row['Title'] || row['title'] || '').trim();
+      const views = parseInt(row['Views'] || row['views'] || '0', 10);
+      const ts    = (row['Timestamp'] || row['timestamp'] || snap.date+' 00:00:00').trim();
+      if (!url) return;
+      if (!videoMap[url]) videoMap[url] = { title, url, series: [] };
+      if (title) videoMap[url].title = title;
+      videoMap[url].series.push({ ts, v: views });
+    });
+  });
+  Object.values(videoMap).forEach(v =>
+    v.series.sort((a,b) => a.ts.localeCompare(b.ts))
+  );
+}
+
+function setSub(t) { document.getElementById('loadSub').textContent = t; }
+
+/* ── FILTER HELPERS ── */
+function getFilteredSeries(video) {
+  let s = video.series;
+  if (fromDate) s = s.filter(p => p.ts >= fromDate);
+  if (toDate)   s = s.filter(p => p.ts <= toDate+' 23:59:59');
+  return s;
+}
+
+function computeStats(video) {
+  const s = getFilteredSeries(video);
+  if (!s.length) return { latestViews:0, totalGain:0, filteredSeries:[] };
+  const latestViews = s[s.length-1].v;
+  const totalGain   = latestViews - s[0].v;
+  return { latestViews, totalGain, filteredSeries: s };
+}
+
+function rebuild() {
+  const q = (document.getElementById('searchInput').value||'').toLowerCase();
+  filtered = Object.values(videoMap)
+    .map(v => ({ ...v, ...computeStats(v) }))
+    .filter(v => {
+      if (!v.filteredSeries.length) return false;
+      if (q && !v.title.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  filtered.sort((a,b) => {
+    if (sortKey==='title')       return a.title.localeCompare(b.title);
+    if (sortKey==='latestViews') return b.latestViews - a.latestViews;
+    return b.totalGain - a.totalGain;
+  });
+}
+
+/* ── AGGREGATION ── */
+function aggregate(series, agg) {
+  if (agg === 'hourly') return series.map(p=>({ts:p.ts, v:p.v}));
+  const m = new Map();
+  series.forEach(p => {
+    const k = bKey(p.ts, agg);
+    m.set(k, p.v); // last value per bucket
+  });
+  return Array.from(m.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([ts,v])=>({ts,v}));
+}
+
+/* ── CHART ── */
 function buildChart() {
-  const ctx = document.getElementById('mainChart').getContext('2d');
-  if (mainChart) mainChart.destroy();
+  const ctx   = document.getElementById('mainChart').getContext('2d');
+  const empty = document.getElementById('chartEmpty');
 
-  const labels = getLabels();
+  if (!selUrls.length) {
+    empty.style.display = 'flex';
+    if (chart) { chart.destroy(); chart=null; }
+    return;
+  }
+  empty.style.display = 'none';
 
-  const datasets = selectedUrls.map((url, i) => {
-    const video = videos.find(v => v.url === url);
-    if (!video) return null;
-    const color = COLORS[i % COLORS.length];
-    return {
-      label: video.title,
-      data: getChartData(video),
-      borderColor: color,
-      backgroundColor: color + '18',
-      borderWidth: 2,
-      pointRadius: 3,
-      pointHoverRadius: 5,
-      tension: 0.3,
-      fill: false
-    };
+  const sel = selUrls.map(url => {
+    const v = videoMap[url]; if (!v) return null;
+    const s = getFilteredSeries(v);
+    return { v, agg: aggregate(s, aggMode) };
   }).filter(Boolean);
 
-  mainChart = new Chart(ctx, {
+  /* Union of all bucket keys */
+  const keySet = new Set();
+  sel.forEach(({agg}) => agg.forEach(p => keySet.add(p.ts)));
+  const keys = Array.from(keySet).sort();
+  const labels = keys.map(k => bLabel(k, aggMode));
+
+  const datasets = sel.map(({v, agg}, i) => {
+    const color  = COLORS[i % COLORS.length];
+    const valMap = new Map(agg.map(p=>[p.ts,p.v]));
+    let raw = keys.map(k => valMap.has(k) ? valMap.get(k) : null);
+    if (chartMode === 'delta') {
+      const base = raw.find(x=>x!=null) ?? 0;
+      raw = raw.map(x => x!=null ? x-base : null);
+    }
+    return {
+      label: v.title,
+      data: raw,
+      borderColor: color,
+      backgroundColor: color+'18',
+      borderWidth: 2,
+      pointRadius: raw.length > 80 ? 0 : 3,
+      pointHoverRadius: 5,
+      tension: 0.3,
+      fill: false,
+      spanGaps: true,
+    };
+  });
+
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
     type: 'line',
     data: { labels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
+      interaction: { mode:'index', intersect:false },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#1a1a24',
-          borderColor: '#252535',
-          borderWidth: 1,
-          titleColor: '#6b6b8a',
-          bodyColor: '#e8e8f0',
+          backgroundColor:'#1a1a24', borderColor:'#252535', borderWidth:1,
+          titleColor:'#6b6b8a', bodyColor:'#e8e8f0',
           callbacks: {
-            label: ctx => ` ${ctx.dataset.label.slice(0, 30)}: ${fmtNum(ctx.parsed.y)}`
+            label: c => ` ${c.dataset.label.slice(0,38)}: ${fmt(c.parsed.y)}`
           }
         }
       },
       scales: {
         x: {
-          grid: { color: '#1e1e2e' },
-          ticks: { color: '#6b6b8a', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 8 }
+          grid: { color:'#1c1c2c' },
+          ticks: {
+            color:'#6b6b8a',
+            font:{ family:'DM Mono', size:10 },
+            maxTicksLimit: aggMode==='hourly' ? 12 : aggMode==='daily' ? 14 : 16,
+            maxRotation: 35,
+          }
         },
         y: {
-          grid: { color: '#1e1e2e' },
-          ticks: { color: '#6b6b8a', font: { family: 'DM Mono', size: 10 }, callback: v => fmtNum(v) }
+          grid:{ color:'#1c1c2c' },
+          ticks:{ color:'#6b6b8a', font:{family:'DM Mono',size:10}, callback:v=>fmt(v) }
         }
       }
     }
   });
 }
 
-function updateChartLegend() {
-  const legend = document.getElementById('chartLegend');
-  const info = document.getElementById('selectedInfo');
-
-  if (selectedUrls.length === 0) {
-    legend.innerHTML = '<span style="color:var(--muted);font-family:DM Mono;font-size:11px">Click videos in the table below to compare them here</span>';
+function updateLegend() {
+  const leg  = document.getElementById('chartLegend');
+  const info = document.getElementById('selInfo');
+  if (!selUrls.length) {
+    leg.innerHTML = '<span style="color:var(--muted);font-family:DM Mono;font-size:11px">Click rows below to add videos to the chart</span>';
     info.textContent = 'No videos selected';
     return;
   }
-
-  info.textContent = `${selectedUrls.length}/5 video${selectedUrls.length > 1 ? 's' : ''} selected`;
-
-  legend.innerHTML = selectedUrls.map((url, i) => {
-    const video = videos.find(v => v.url === url);
-    if (!video) return '';
-    const color = COLORS[i % COLORS.length];
-    return `<div class="legend-pill" onclick="removeFromChart('${url}')">
-      <div class="dot" style="background:${color}"></div>
-      <span class="pill-name">${video.title}</span>
-      <span class="pill-remove">✕</span>
+  info.textContent = `${selUrls.length}/5 video${selUrls.length!==1?'s':''} selected`;
+  leg.innerHTML = selUrls.map((url,i) => {
+    const v = videoMap[url]; if (!v) return '';
+    const c = COLORS[i%COLORS.length];
+    const safe = url.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return `<div class="legend-pill" onclick="rmChart('${safe}')">
+      <div class="dot" style="background:${c}"></div>
+      <span class="pname">${v.title}</span>
+      <span class="px">✕</span>
     </div>`;
   }).join('');
 }
 
-function addToChart(url) {
-  if (selectedUrls.includes(url)) {
-    removeFromChart(url);
-    return;
-  }
-  if (selectedUrls.length >= 5) {
-    selectedUrls.shift();
-  }
-  selectedUrls.push(url);
-  buildChart();
-  updateChartLegend();
-  renderTable();
+function addChart(url) {
+  if (selUrls.includes(url)) { rmChart(url); return; }
+  if (selUrls.length >= 5) selUrls.shift();
+  selUrls.push(url);
+  buildChart(); updateLegend(); renderTable();
+}
+function rmChart(url) {
+  selUrls = selUrls.filter(u=>u!==url);
+  buildChart(); updateLegend(); renderTable();
 }
 
-function removeFromChart(url) {
-  selectedUrls = selectedUrls.filter(u => u !== url);
-  buildChart();
-  updateChartLegend();
-  renderTable();
-}
-
-// --- Sparkline ---
-function drawSparkline(canvas, data) {
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width = 80;
-  const h = canvas.height = 32;
-  ctx.clearRect(0, 0, w, h);
-
-  const vals = data.map(d => d.v);
-  const min = Math.min(...vals);
-  const max = Math.max(...vals);
-  const range = max - min || 1;
-
-  ctx.strokeStyle = '#7c5cfc';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-
-  vals.forEach((v, i) => {
-    const x = (i / (vals.length - 1)) * w;
-    const y = h - ((v - min) / range) * (h - 4) - 2;
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+/* ── SPARKLINES ── */
+function spark(canvas, series) {
+  const ctx=canvas.getContext('2d');
+  const w=canvas.width=80, h=canvas.height=32;
+  ctx.clearRect(0,0,w,h);
+  if (!series.length) return;
+  const vals=series.map(p=>p.v);
+  const mn=Math.min(...vals), mx=Math.max(...vals), rng=mx-mn||1;
+  ctx.strokeStyle='#7c5cfc'; ctx.lineWidth=1.5; ctx.beginPath();
+  vals.forEach((v,i)=>{
+    const x=(i/(vals.length-1||1))*w;
+    const y=h-((v-mn)/rng)*(h-4)-2;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
   });
-
   ctx.stroke();
 }
 
-// --- Table ---
-function getFilteredSorted() {
-  let result = [...videos];
+/* ── STATS ── */
+function updateStats() {
+  document.getElementById('sVids').textContent = filtered.length;
+  const fromD = fromDate || (allSnaps[0]?.date) || DATA_START;
+  const toD   = toDate   || (allSnaps[allSnaps.length-1]?.date) || dStr(new Date());
+  document.getElementById('sRange').textContent = `${fromD} → ${toD}`;
 
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase();
-    result = result.filter(v => v.title.toLowerCase().includes(q));
-  }
-
-  result.sort((a, b) => {
-    if (currentSort === 'title') return a.title.localeCompare(b.title);
-    if (currentSort === 'latestViews') return b.latestViews - a.latestViews;
-    return b.totalGain - a.totalGain;
-  });
-
-  return result;
+  if (!filtered.length) return;
+  const tv = filtered.reduce((a,b)=>a.latestViews>b.latestViews?a:b);
+  document.getElementById('sTopV').textContent = fmt(tv.latestViews);
+  document.getElementById('sTopT').textContent = tv.title.slice(0,32)+(tv.title.length>32?'…':'');
+  const tg = filtered.reduce((a,b)=>a.totalGain>b.totalGain?a:b);
+  document.getElementById('sFastV').textContent = fmtGain(tg.totalGain);
+  document.getElementById('sFastT').textContent = tg.title.slice(0,32)+(tg.title.length>32?'…':'');
+  const total = filtered.reduce((s,v)=>s+v.latestViews,0);
+  document.getElementById('sTotalV').textContent = fmt(total);
+  const pts = filtered.reduce((s,v)=>s+v.filteredSeries.length,0);
+  const snInRange = allSnaps.filter(s=>(!fromDate||s.date>=fromDate)&&(!toDate||s.date<=toDate)).length;
+  document.getElementById('sPoints').textContent = `${snInRange} files · ${pts.toLocaleString()} pts`;
 }
 
+/* ── TABLE ── */
 function renderTable() {
-  const tbody = document.getElementById('videoTableBody');
-  const filtered = getFilteredSorted();
-  document.getElementById('resultCount').textContent = `${filtered.length} of ${videos.length} videos`;
-
-  if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No videos found matching "${searchQuery}"</div></td></tr>`;
+  const tbody = document.getElementById('tBody');
+  document.getElementById('resCount').textContent =
+    `${filtered.length} of ${Object.keys(videoMap).length} videos`;
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No videos match the current filters.</div></td></tr>`;
     return;
   }
-
-  tbody.innerHTML = filtered.map((video, i) => {
-    const isSelected = selectedUrls.includes(video.url);
-    const gainClass = video.totalGain > 0 ? 'gain-pos' : video.totalGain < 0 ? 'gain-neg' : 'gain-zero';
-    const btnClass = isSelected ? 'action-btn added' : 'action-btn';
-    const btnText = isSelected ? '✓ Added' : '+ Chart';
-    const vid = getVideoId(video.url);
-    const colorIdx = selectedUrls.indexOf(video.url);
-    const dotStyle = isSelected ? `style="width:8px;height:8px;border-radius:50%;background:${COLORS[colorIdx]};display:inline-block;margin-right:6px"` : '';
-
-    return `<tr class="${isSelected ? 'selected' : ''}" onclick="addToChart('${video.url.replace(/'/g, "\\'")}')">
-      <td class="rank-num">${i + 1}</td>
-      <td class="video-title-cell">
-        ${isSelected ? `<span ${dotStyle}></span>` : ''}
-        <div class="title">${video.title}</div>
-        <div class="url-tag">youtube.com/watch?v=${vid}</div>
+  tbody.innerHTML = filtered.map((video,i) => {
+    const sel  = selUrls.includes(video.url);
+    const gCls = video.totalGain>0?'gain-pos':video.totalGain<0?'gain-neg':'gain-zero';
+    const cIdx = selUrls.indexOf(video.url);
+    const dot  = sel ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${COLORS[cIdx]};margin-right:6px;flex-shrink:0;margin-top:3px"></span>` : '';
+    const su   = video.url.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return `<tr class="${sel?'selected':''}" onclick="addChart('${su}')">
+      <td class="rank-num">${i+1}</td>
+      <td class="vtitle-cell">
+        <div style="display:flex;align-items:flex-start">${dot}<div>
+          <div class="vtitle">${video.title}</div>
+          <div class="vid">youtu.be/${vidId(video.url)}</div>
+        </div></div>
       </td>
-      <td class="gain-cell ${gainClass}">${fmtGain(video.totalGain)}</td>
-      <td class="views-num">${fmtNum(video.latestViews)}</td>
-      <td class="hide-sm"><canvas class="mini-sparkline" data-url="${video.url}"></canvas></td>
+      <td class="gain-cell ${gCls}">${fmtGain(video.totalGain)}</td>
+      <td class="views-num">${fmt(video.latestViews)}</td>
+      <td class="hide-sm"><canvas class="mini-spark" data-url="${video.url}"></canvas></td>
       <td onclick="event.stopPropagation()">
-        <a href="${video.url}" target="_blank" style="text-decoration:none" onclick="event.stopPropagation()">
-          <button class="action-btn" style="margin-right:4px">↗</button>
+        <a href="${video.url}" target="_blank" style="text-decoration:none">
+          <button class="abtn" style="margin-right:4px" title="Open on YouTube">↗</button>
         </a>
-        <button class="${btnClass}" onclick="event.stopPropagation();addToChart('${video.url.replace(/'/g, "\\'")}')">${btnText}</button>
+        <button class="${sel?'abtn added':'abtn'}"
+          onclick="event.stopPropagation();addChart('${su}')">${sel?'✓ Added':'+ Chart'}</button>
       </td>
     </tr>`;
   }).join('');
 
-  // Draw sparklines
-  document.querySelectorAll('.mini-sparkline').forEach(canvas => {
-    const url = canvas.dataset.url;
-    const video = videos.find(v => v.url === url);
-    if (video) drawSparkline(canvas, video.data);
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.mini-spark').forEach(c => {
+      const v = videoMap[c.dataset.url];
+      if (v) spark(c, getFilteredSeries(v));
+    });
   });
 }
 
-// --- Sort buttons ---
-document.querySelectorAll('.sort-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentSort = btn.dataset.sort;
-    renderTable();
+/* ── DATE FILTER ── */
+function applyFilter() {
+  fromDate = document.getElementById('dateFrom').value;
+  toDate   = document.getElementById('dateTo').value;
+  const sn = allSnaps.filter(s=>(!fromDate||s.date>=fromDate)&&(!toDate||s.date<=toDate));
+  document.getElementById('dateInfo').textContent = `${sn.length} snapshot${sn.length!==1?'s':''} in range`;
+  const from = fromDate || (allSnaps[0]?.date) || DATA_START;
+  const to   = toDate   || (allSnaps[allSnaps.length-1]?.date) || dStr(new Date());
+  document.getElementById('hdrRange').textContent = `${from} – ${to}`;
+  rebuild(); updateStats(); renderTable();
+  if (selUrls.length) buildChart();
+  updateLegend();
+}
+
+function quickRange(val) {
+  document.querySelectorAll('.qr-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`.qr-btn[data-range="${val}"]`)?.classList.add('active');
+  if (val==='all') {
+    document.getElementById('dateFrom').value='';
+    document.getElementById('dateTo').value='';
+  } else {
+    const t=new Date(), f=new Date();
+    f.setDate(f.getDate()-parseInt(val));
+    document.getElementById('dateFrom').value=dStr(f);
+    document.getElementById('dateTo').value=dStr(t);
+  }
+  applyFilter();
+}
+
+/* ── EVENT WIRING ── */
+document.getElementById('searchInput').addEventListener('input', ()=>{
+  rebuild(); renderTable();
+});
+document.getElementById('dateFrom').addEventListener('change', ()=>{
+  document.querySelectorAll('.qr-btn').forEach(b=>b.classList.remove('active'));
+  applyFilter();
+});
+document.getElementById('dateTo').addEventListener('change', ()=>{
+  document.querySelectorAll('.qr-btn').forEach(b=>b.classList.remove('active'));
+  applyFilter();
+});
+document.querySelectorAll('.qr-btn').forEach(b=>
+  b.addEventListener('click', ()=>quickRange(b.dataset.range))
+);
+document.querySelectorAll('.pill-btn[data-sort]').forEach(b=>
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.pill-btn[data-sort]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); sortKey=b.dataset.sort; rebuild(); renderTable();
+  })
+);
+document.querySelectorAll('.pill-btn[data-mode]').forEach(b=>
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.pill-btn[data-mode]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); chartMode=b.dataset.mode;
+    document.getElementById('chartSub').textContent =
+      chartMode==='delta'
+        ? 'Showing cumulative view gains from the start of the selected date range'
+        : 'Click any video row below to plot it here · up to 5 at once';
+    if (selUrls.length) buildChart();
+  })
+);
+document.querySelectorAll('.pill-btn[data-agg]').forEach(b=>
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.pill-btn[data-agg]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); aggMode=b.dataset.agg;
+    if (selUrls.length) buildChart();
+  })
+);
+
+/* ── BOOT ── */
+async function init() {
+  await loadAll();
+
+  const dates = allSnaps.map(s=>s.date).sort();
+  const minD  = dates[0]   || DATA_START;
+  const maxD  = dates[dates.length-1] || dStr(new Date());
+
+  ['dateFrom','dateTo'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.setAttribute('min', minD);
+    el.setAttribute('max', maxD);
   });
+
+  document.getElementById('hdrRange').textContent = `${minD} – ${maxD}`;
+  document.getElementById('hdrMeta').textContent  =
+    `${Object.keys(videoMap).length} videos · ${allSnaps.length} files`;
+  document.getElementById('dateInfo').textContent =
+    `${allSnaps.length} snapshots in range`;
+
+  rebuild(); updateStats(); renderTable(); updateLegend();
+
+  // Auto-select top grower
+  if (filtered.length) addChart(filtered[0].url);
+
+  document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+init().catch(err=>{
+  setSub(`Error: ${err.message}`);
+  console.error(err);
 });
-
-// --- Mode toggle ---
-document.querySelectorAll('.mode-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentMode = btn.dataset.mode;
-    document.getElementById('chartSubtitle').textContent =
-      currentMode === 'growth' ? 'Showing view gains from baseline (0 = start of day)' : 'Click videos below to compare · Up to 5 at once';
-    if (selectedUrls.length > 0) buildChart();
-  });
-});
-
-// --- Search ---
-document.getElementById('searchInput').addEventListener('input', e => {
-  searchQuery = e.target.value;
-  renderTable();
-});
-
-// --- Init ---
-updateStats();
-buildChart();
-updateChartLegend();
-renderTable();
-
-// Auto-add top gainer on load
-const topGainer = [...videos].sort((a, b) => b.totalGain - a.totalGain)[0];
-if (topGainer) setTimeout(() => addToChart(topGainer.url), 200);
 </script>
-
 </body>
 </html>

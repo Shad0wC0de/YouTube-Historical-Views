@@ -340,22 +340,50 @@ const dStr  = d  => d.toISOString().slice(0,10);
 const pad2  = n  => String(n).padStart(2,'0');
 
 /* Parse CSV text → array of objects (handles quoted commas) */
+/* RFC 4180-compliant CSV parser.
+   Handles:
+     - Quoted fields containing commas  → "BINI | 'Salamin, Salamin'"
+     - Doubled-quote escaping inside quoted fields  → ""Walang Biruan""
+     - Mixed quoted / unquoted fields on the same line
+     - CRLF and LF line endings
+*/
 function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-  const hdr = lines[0].split(',').map(h => h.trim());
-  return lines.slice(1).map(line => {
-    const cols = []; let cur = '', inQ = false;
-    for (const ch of line) {
-      if (ch === '"') { inQ = !inQ; }
-      else if (ch === ',' && !inQ) { cols.push(cur); cur = ''; }
-      else cur += ch;
+  // Tokenise the whole file character-by-character so we never split on \n
+  // inside a quoted field (rare but possible in titles).
+  const rows = [];
+  let col = '', inQ = false, row = [];
+  const push = () => { row.push(col); col = ''; };
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) {
+      if (ch === '"') {
+        // Peek ahead: doubled-quote → literal quote char, not end of field
+        if (text[i+1] === '"') { col += '"'; i++; }
+        else { inQ = false; }          // closing quote
+      } else {
+        col += ch;
+      }
+    } else {
+      if      (ch === '"')  { inQ = true; }
+      else if (ch === ',')  { push(); }
+      else if (ch === '\n') { push(); rows.push(row); row = []; }
+      else if (ch === '\r') { /* skip – \r\n handled by \n above */ }
+      else { col += ch; }
     }
-    cols.push(cur);
-    const o = {};
-    hdr.forEach((h, i) => o[h] = (cols[i]||'').trim());
-    return o;
-  });
+  }
+  // Last field / row (file may not end with \n)
+  if (col.length || row.length) { push(); rows.push(row); }
+
+  if (rows.length < 2) return [];
+  const hdr = rows[0].map(h => h.trim());
+  return rows.slice(1)
+    .filter(r => r.some(c => c.trim()))   // skip blank lines
+    .map(r => {
+      const o = {};
+      hdr.forEach((h, i) => o[h] = (r[i] || '').trim());
+      return o;
+    });
 }
 
 /* Bucket key + display label per aggregation mode.
@@ -367,34 +395,39 @@ function parseCSV(text) {
 */
 function bucketOf(pt, agg) {
   switch(agg) {
-    case 'hourly':  return pt.hours;            // "2025-08-03 01:00:00"
-    case 'daily':   return pt.date;             // "2025-08-03"
-    case 'monthly': return pt.month;            // "2025-08-01"
-    case 'yearly':  return pt.date.slice(0,4);  // "2025"
+    case 'hourly':  return pt.hours  || pt.date || '';
+    case 'daily':   return pt.date   || '';
+    case 'monthly': return pt.month  || (pt.date ? pt.date.slice(0,7)+'-01' : '');
+    case 'yearly':  return pt.date   ? pt.date.slice(0,4) : '';
   }
+  return '';
 }
 
 const MNAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function labelOf(key, agg) {
-  switch(agg) {
-    case 'hourly': {
-      // "2025-08-03 01:00:00" → "Aug 03 01:00"
-      const [d, t] = key.split(' ');
-      const dt = new Date(d+'T00:00:00');
-      return `${MNAMES[dt.getMonth()]} ${pad2(dt.getDate())} ${t.slice(0,5)}`;
+  if (!key) return '?';
+  try {
+    switch(agg) {
+      case 'hourly': {
+        const sp = key.split(' ');
+        const d = sp[0], t = sp[1] || '00:00:00';
+        const dt = new Date(d+'T00:00:00');
+        if (isNaN(dt)) return key;
+        return MNAMES[dt.getMonth()]+' '+pad2(dt.getDate())+' '+t.slice(0,5);
+      }
+      case 'daily': {
+        const dt = new Date(key+'T00:00:00');
+        if (isNaN(dt)) return key;
+        return MNAMES[dt.getMonth()]+' '+pad2(dt.getDate())+', '+dt.getFullYear();
+      }
+      case 'monthly': {
+        const dt = new Date(key+'T00:00:00');
+        if (isNaN(dt)) return key;
+        return MNAMES[dt.getMonth()]+' '+dt.getFullYear();
+      }
+      case 'yearly': return key;
     }
-    case 'daily': {
-      // "2025-08-03" → "Aug 03, 2025"
-      const dt = new Date(key+'T00:00:00');
-      return `${MNAMES[dt.getMonth()]} ${pad2(dt.getDate())}, ${dt.getFullYear()}`;
-    }
-    case 'monthly': {
-      // "2025-08-01" → "Aug 2025"
-      const dt = new Date(key+'T00:00:00');
-      return `${MNAMES[dt.getMonth()]} ${dt.getFullYear()}`;
-    }
-    case 'yearly': return key;  // "2025"
-  }
+  } catch(e) { return key; }
   return key;
 }
 
@@ -511,6 +544,7 @@ function aggregate(pts, agg) {
   const map = new Map();
   pts.forEach(p => {
     const k = bucketOf(p, agg);
+    if (!k) return;  // skip rows with missing bucket key (bad parse)
     // last value in bucket wins (most recent snapshot)
     if (!map.has(k) || p.ts > map.get(k).ts)
       map.set(k, p);

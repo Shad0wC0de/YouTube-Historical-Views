@@ -3,305 +3,329 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YT View Pulse — Live Charts</title>
+<title>YT View Pulse</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:#0a0a0f; --surface:#111118; --surface2:#1a1a24; --border:#252535;
-    --accent:#e84d8a; --accent2:#7c5cfc; --accent3:#22d3ee; --text:#e8e8f0;
-    --muted:#6b6b8a; --green:#34d399;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
-  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.012) 2px,rgba(255,255,255,.012) 4px);pointer-events:none;z-index:9999}
+:root {
+  --bg:#0a0a0f; --surface:#111118; --surface2:#1a1a24; --border:#252535;
+  --accent:#e84d8a; --accent2:#7c5cfc; --accent3:#22d3ee;
+  --text:#e8e8f0; --muted:#6b6b8a; --green:#34d399; --red:#f87171;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.013) 2px,rgba(255,255,255,.013) 4px);pointer-events:none;z-index:9999}
 
-  /* Header */
-  header{border-bottom:1px solid var(--border);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;background:rgba(10,10,15,.96);backdrop-filter:blur(12px);z-index:100}
-  .logo{display:flex;align-items:center;gap:12px}
-  .logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center}
-  .logo-icon svg{width:18px;height:18px;fill:white}
-  .logo-text{font-size:16px;font-weight:800;letter-spacing:-.5px}
-  .logo-text em{font-style:normal;color:var(--accent)}
-  .header-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:right;line-height:1.6}
-  .live-dot{display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%;margin-right:5px;animation:pulse 2s ease-in-out infinite}
-  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+/* ─── LOADING OVERLAY ─── */
+#overlay{position:fixed;inset:0;background:rgba(10,10,15,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9000;gap:18px;transition:opacity .4s}
+#overlay.gone{opacity:0;pointer-events:none}
+.spinner{width:52px;height:52px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#ovTitle{font-size:16px;font-weight:700;color:var(--text)}
+#ovSub{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);max-width:380px;text-align:center;line-height:1.6}
+.ov-bar-wrap{width:320px;height:4px;background:var(--border);border-radius:4px;overflow:hidden}
+#ovBar{height:100%;width:0%;background:var(--accent);border-radius:4px;transition:width .3s}
 
-  /* Loading */
-  #loadingOverlay{position:fixed;inset:0;background:rgba(10,10,15,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9000;gap:20px}
-  #loadingOverlay.hidden{display:none}
-  .spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .loading-text{font-family:'DM Mono',monospace;font-size:13px;color:var(--muted)}
-  .loading-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);max-width:340px;text-align:center}
+/* ─── HEADER ─── */
+header{height:60px;border-bottom:1px solid var(--border);padding:0 40px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(10,10,15,.97);backdrop-filter:blur(14px);z-index:100}
+.logo{display:flex;align-items:center;gap:11px}
+.logo-icon{width:30px;height:30px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:17px;height:17px;fill:#fff}
+.logo-name{font-size:15px;font-weight:800;letter-spacing:-.5px}
+.logo-name em{font-style:normal;color:var(--accent)}
+.hdr-right{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:right;line-height:1.7}
+.pulse{display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%;margin-right:5px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.75)}}
 
-  /* Layout */
-  .container{max-width:1400px;margin:0 auto;padding:32px 40px}
-  .page-title{margin-bottom:28px}
-  .page-title h1{font-size:36px;font-weight:800;letter-spacing:-1.5px;line-height:1;margin-bottom:6px}
-  .page-title h1 em{font-style:normal;color:var(--accent)}
-  .page-title p{font-size:13px;color:var(--muted);font-family:'DM Mono',monospace}
+/* ─── CONTAINER ─── */
+.wrap{max-width:1400px;margin:0 auto;padding:32px 40px}
 
-  /* Stats */
-  .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;position:relative;overflow:hidden}
-  .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);opacity:.7}
-  .stat-card:nth-child(2)::before{background:var(--accent2)}
-  .stat-card:nth-child(3)::before{background:var(--accent3)}
-  .stat-card:nth-child(4)::before{background:var(--green)}
-  .stat-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
-  .stat-value{font-size:22px;font-weight:700;letter-spacing:-.5px}
-  .stat-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ─── PAGE TITLE ─── */
+.pg-title{margin-bottom:28px}
+.pg-title h1{font-size:34px;font-weight:800;letter-spacing:-1.5px;margin-bottom:5px}
+.pg-title h1 em{font-style:normal;color:var(--accent)}
+.pg-title p{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)}
 
-  /* Date filter */
-  .date-filter-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-  .ctrl-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap}
-  .date-input-wrap{display:flex;align-items:center;gap:8px}
-  .date-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;transition:border-color .2s;cursor:pointer;color-scheme:dark}
-  .date-input:focus{border-color:var(--accent2)}
-  .date-sep{color:var(--muted);font-family:'DM Mono',monospace;font-size:12px}
-  .quick-ranges{display:flex;gap:6px;flex-wrap:wrap}
-  .qr-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--muted);font-family:'Syne',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
-  .qr-btn:hover{border-color:var(--accent2);color:var(--text)}
-  .qr-btn.active{background:var(--accent2);border-color:var(--accent2);color:white}
-  .date-info{margin-left:auto;font-family:'DM Mono',monospace;font-size:11px;color:var(--accent3);white-space:nowrap}
+/* ─── STAT CARDS ─── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:.75}
+.sc:nth-child(1)::before{background:var(--accent)}
+.sc:nth-child(2)::before{background:var(--accent2)}
+.sc:nth-child(3)::before{background:var(--accent3)}
+.sc:nth-child(4)::before{background:var(--green)}
+.sc-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+.sc-val{font-size:21px;font-weight:700;letter-spacing:-.5px}
+.sc-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-  /* Controls */
-  .controls{display:flex;gap:12px;margin-bottom:24px;align-items:flex-start;flex-wrap:wrap}
-  .search-box{flex:1;min-width:220px;position:relative}
-  .search-box input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px 10px 40px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
-  .search-box input:focus{border-color:var(--accent)}
-  .search-box input::placeholder{color:var(--muted)}
-  .search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
-  .ctrl-group{display:flex;gap:8px;align-items:center}
-  .pill-row{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-  .pill-btn{padding:9px 14px;background:none;border:none;color:var(--muted);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
-  .pill-btn:hover{color:var(--text)}
-  .pill-btn.active{background:var(--accent2);color:white}
-  .pill-btn.active.agg{background:var(--accent3);color:var(--bg)}
+/* ─── DATE FILTER BAR ─── */
+.date-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.bar-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap}
+.date-pair{display:flex;align-items:center;gap:8px}
+.di{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 11px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;transition:border-color .2s;cursor:pointer;color-scheme:dark}
+.di:focus{border-color:var(--accent2)}
+.dsep{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)}
+.qr-row{display:flex;gap:6px;flex-wrap:wrap}
+.qr{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--muted);font-family:'Syne',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.qr:hover{border-color:var(--accent2);color:var(--text)}
+.qr.on{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.date-info{margin-left:auto;font-family:'DM Mono',monospace;font-size:11px;color:var(--accent3);white-space:nowrap}
 
-  /* Chart */
-  .chart-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:28px}
-  .chart-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;gap:16px;flex-wrap:wrap}
-  .chart-title-block h2{font-size:18px;font-weight:700;letter-spacing:-.3px;margin-bottom:4px}
-  .chart-title-block p{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
-  .selected-info{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);text-align:right}
-  .chart-wrap{position:relative;height:340px}
-  .chart-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:13px}
-  .chart-empty svg{opacity:.3}
-  .chart-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;padding-top:20px;border-top:1px solid var(--border)}
-  .legend-pill{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 10px 4px 6px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s;max-width:260px}
-  .legend-pill:hover{border-color:var(--accent);color:var(--text)}
-  .legend-pill .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-  .legend-pill .pname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'DM Mono',monospace}
-  .legend-pill .px{margin-left:4px;opacity:.4;font-size:12px;flex-shrink:0}
-  .legend-pill:hover .px{opacity:1}
+/* ─── CONTROLS ─── */
+.controls{display:flex;gap:12px;margin-bottom:22px;align-items:center;flex-wrap:wrap}
+.sb{flex:1;min-width:220px;position:relative}
+.sb input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 15px 10px 38px;color:var(--text);font-family:'Syne',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.sb input:focus{border-color:var(--accent)}
+.sb input::placeholder{color:var(--muted)}
+.sb-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.cg{display:flex;gap:8px;align-items:center}
+.cg-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;white-space:nowrap}
+.ptabs{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ptab{padding:8px 13px;background:none;border:none;color:var(--muted);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.ptab:hover{color:var(--text)}
+.ptab.on{background:var(--accent2);color:#fff}
+.ptab.on.agg{background:var(--accent3);color:var(--bg)}
 
-  /* Table */
-  .table-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
-  .table-header{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-  .table-header h2{font-size:15px;font-weight:700;letter-spacing:-.2px}
-  .result-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
-  .video-table{width:100%;border-collapse:collapse}
-  .video-table th{background:var(--surface2);padding:10px 16px;text-align:left;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;transition:color .15s}
-  .video-table th:hover{color:var(--text)}
-  .video-table th.sorted{color:var(--accent)}
-  .video-table td{padding:11px 16px;border-bottom:1px solid rgba(37,37,53,.5);vertical-align:middle;font-size:13px}
-  .video-table tr{transition:background .12s;cursor:pointer}
-  .video-table tr:hover td{background:var(--surface2)}
-  .video-table tr.selected td{background:rgba(232,77,138,.07)}
-  .video-table tr.selected td:first-child{border-left:3px solid var(--accent)}
-  .rank-num{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);width:40px}
-  .vtitle-cell{max-width:360px}
-  .vtitle-cell .vtitle{font-weight:600;font-size:13px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-  .vtitle-cell .vid{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px}
-  .views-num{font-family:'DM Mono',monospace;font-size:13px;font-weight:500}
-  .gain-cell{font-family:'DM Mono',monospace;font-size:13px}
-  .gain-pos{color:var(--green)} .gain-zero{color:var(--muted)} .gain-neg{color:#f87171}
-  .mini-spark{width:80px;height:32px}
-  .abtn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--muted);font-family:'Syne',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
-  .abtn:hover{background:var(--accent);border-color:var(--accent);color:white}
-  .abtn.added{background:var(--accent);border-color:var(--accent);color:white}
-  .empty-state{text-align:center;padding:60px;color:var(--muted);font-family:'DM Mono',monospace;font-size:13px}
+/* ─── CHART SECTION ─── */
+.chart-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:24px}
+.chart-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;gap:14px;flex-wrap:wrap}
+.chart-hdr h2{font-size:17px;font-weight:700;letter-spacing:-.3px;margin-bottom:3px}
+.chart-hdr p{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+.sel-info{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);text-align:right}
+.chart-area{position:relative;height:340px}
+.chart-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;pointer-events:none}
+.chart-ph svg{opacity:.25}
+.legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:18px;padding-top:18px;border-top:1px solid var(--border)}
+.lpill{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 10px 4px 6px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s;max-width:260px}
+.lpill:hover{border-color:var(--accent);color:var(--text)}
+.ldot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.lname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'DM Mono',monospace}
+.lx{margin-left:4px;opacity:.35;font-size:12px;flex-shrink:0}
+.lpill:hover .lx{opacity:1}
 
-  ::-webkit-scrollbar{width:6px;height:6px}
-  ::-webkit-scrollbar-track{background:transparent}
-  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-  ::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+/* ─── TABLE ─── */
+.tbl-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.tbl-hdr{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.tbl-hdr h2{font-size:14px;font-weight:700;letter-spacing:-.2px}
+.res-ct{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+table{width:100%;border-collapse:collapse}
+th{background:var(--surface2);padding:9px 15px;text-align:left;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;transition:color .15s}
+th:hover{color:var(--text)} th.sorted{color:var(--accent)}
+td{padding:10px 15px;border-bottom:1px solid rgba(37,37,53,.45);vertical-align:middle;font-size:13px}
+tr{transition:background .1s;cursor:pointer}
+tr:hover td{background:var(--surface2)}
+tr.sel td{background:rgba(232,77,138,.07)}
+tr.sel td:first-child{border-left:3px solid var(--accent)}
+.rk{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);width:38px}
+.ttd{max-width:360px}
+.ttitle{font-weight:600;font-size:13px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.tvid{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px}
+.vn{font-family:'DM Mono',monospace;font-size:13px;font-weight:500}
+.gc{font-family:'DM Mono',monospace;font-size:13px}
+.gp{color:var(--green)} .gz{color:var(--muted)} .gn{color:var(--red)}
+.spark{width:80px;height:30px}
+.abtn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 9px;color:var(--muted);font-family:'Syne',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.abtn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.abtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.empty{text-align:center;padding:50px;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px}
 
-  @media(max-width:900px){
-    header{padding:0 16px} .container{padding:16px}
-    .stats-bar{grid-template-columns:repeat(2,1fr)}
-    th.hide-sm,td.hide-sm{display:none}
-  }
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+@media(max-width:880px){
+  header,.wrap{padding-left:16px;padding-right:16px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .hide-sm{display:none}
+}
 </style>
 </head>
 <body>
 
-<div id="loadingOverlay">
+<!-- ── LOADING ── -->
+<div id="overlay">
   <div class="spinner"></div>
-  <div class="loading-text">Loading view history…</div>
-  <div class="loading-sub" id="loadSub">Scanning data/ directory for CSV files</div>
+  <div id="ovTitle">Loading view history…</div>
+  <div class="ov-bar-wrap"><div id="ovBar"></div></div>
+  <div id="ovSub">Scanning data/ directory for CSV files</div>
 </div>
 
+<!-- ── HEADER ── -->
 <header>
   <div class="logo">
     <div class="logo-icon">
-      <svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V9a8.27 8.27 0 004.84 1.56V7.12a4.86 4.86 0 01-1.07-.43z"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 000 12.68 6.34 6.34 0 006.33-6.34V9a8.27 8.27 0 004.84 1.56V7.12a4.85 4.85 0 01-1.07-.43z"/></svg>
     </div>
-    <span class="logo-text">YT View <em>Pulse</em></span>
+    <span class="logo-name">YT View <em>Pulse</em></span>
   </div>
-  <div class="header-meta">
-    <div><span class="live-dot"></span><span id="hdrRange">Loading…</span></div>
-    <div id="hdrMeta">— videos · — files</div>
+  <div class="hdr-right">
+    <div><span class="pulse"></span><span id="hRange">Loading…</span></div>
+    <div id="hMeta">— videos · — files loaded</div>
   </div>
 </header>
 
-<div class="container">
-  <div class="page-title">
+<!-- ── MAIN ── -->
+<div class="wrap">
+
+  <div class="pg-title">
     <h1>YouTube <em>View</em> Growth</h1>
-    <p>// Loads all CSVs from <strong>data/</strong> · click rows to chart · data starts from <strong>Aug 3 2025</strong></p>
+    <p>// Reads all CSVs from <strong>data/</strong> · data begins <strong>Aug 3 2025</strong> · click rows to compare on chart</p>
   </div>
 
-  <div class="stats-bar">
-    <div class="stat-card">
-      <div class="stat-label">Tracked Videos</div>
-      <div class="stat-value" id="sVids">—</div>
-      <div class="stat-sub" id="sRange">—</div>
+  <!-- Stats -->
+  <div class="stats">
+    <div class="sc">
+      <div class="sc-label">Tracked Videos</div>
+      <div class="sc-val" id="sVids">—</div>
+      <div class="sc-sub" id="sRange">—</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Highest Views</div>
-      <div class="stat-value" id="sTopV">—</div>
-      <div class="stat-sub" id="sTopT">—</div>
+    <div class="sc">
+      <div class="sc-label">Highest Views (period)</div>
+      <div class="sc-val" id="sTopV">—</div>
+      <div class="sc-sub" id="sTopT">—</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Most Growth (period)</div>
-      <div class="stat-value" id="sFastV">—</div>
-      <div class="stat-sub" id="sFastT">—</div>
+    <div class="sc">
+      <div class="sc-label">Most Growth (period)</div>
+      <div class="sc-val" id="sFastV">—</div>
+      <div class="sc-sub" id="sFastT">—</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Combined Views</div>
-      <div class="stat-value" id="sTotalV">—</div>
-      <div class="stat-sub" id="sPoints">—</div>
+    <div class="sc">
+      <div class="sc-label">Combined Views</div>
+      <div class="sc-val" id="sTot">—</div>
+      <div class="sc-sub" id="sFiles">— files · — data points</div>
     </div>
   </div>
 
   <!-- Date filter -->
-  <div class="date-filter-bar">
-    <span class="ctrl-label">Date Range</span>
-    <div class="date-input-wrap">
-      <input type="date" id="dateFrom" class="date-input" />
-      <span class="date-sep">→</span>
-      <input type="date" id="dateTo"   class="date-input" />
+  <div class="date-bar">
+    <span class="bar-label">Date Range</span>
+    <div class="date-pair">
+      <input type="date" id="dFrom" class="di" />
+      <span class="dsep">→</span>
+      <input type="date" id="dTo" class="di" />
     </div>
-    <div class="quick-ranges">
-      <button class="qr-btn" data-range="7">Last 7d</button>
-      <button class="qr-btn" data-range="30">Last 30d</button>
-      <button class="qr-btn" data-range="90">Last 90d</button>
-      <button class="qr-btn" data-range="180">Last 6mo</button>
-      <button class="qr-btn active" data-range="all">All Time</button>
+    <div class="qr-row">
+      <button class="qr" data-r="7">Last 7d</button>
+      <button class="qr" data-r="30">Last 30d</button>
+      <button class="qr" data-r="90">Last 90d</button>
+      <button class="qr" data-r="180">Last 6mo</button>
+      <button class="qr on" data-r="all">All Time</button>
     </div>
-    <div class="date-info" id="dateInfo">— snapshots in range</div>
+    <div class="date-info" id="dInfo">— snapshots in range</div>
   </div>
 
   <!-- Controls -->
   <div class="controls">
-    <div class="search-box">
-      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" id="searchInput" placeholder="Search videos…" />
+    <div class="sb">
+      <svg class="sb-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search" placeholder="Search videos…" />
     </div>
 
-    <div class="ctrl-group">
-      <span class="ctrl-label">Sort</span>
-      <div class="pill-row">
-        <button class="pill-btn" data-sort="latestViews">Views</button>
-        <button class="pill-btn active" data-sort="totalGain">Growth</button>
-        <button class="pill-btn" data-sort="title">Title</button>
+    <div class="cg">
+      <span class="cg-label">Sort</span>
+      <div class="ptabs">
+        <button class="ptab" data-sort="latestViews">Views</button>
+        <button class="ptab on" data-sort="gain">Growth</button>
+        <button class="ptab" data-sort="title">Title</button>
       </div>
     </div>
 
-    <div class="ctrl-group">
-      <span class="ctrl-label">Chart</span>
-      <div class="pill-row">
-        <button class="pill-btn active" data-mode="absolute">Absolute</button>
-        <button class="pill-btn" data-mode="delta">Delta</button>
+    <div class="cg">
+      <span class="cg-label">Chart</span>
+      <div class="ptabs">
+        <button class="ptab on" data-mode="abs">Absolute</button>
+        <button class="ptab" data-mode="delta">Delta</button>
       </div>
     </div>
 
-    <div class="ctrl-group">
-      <span class="ctrl-label">Aggregate</span>
-      <div class="pill-row">
-        <button class="pill-btn agg active" data-agg="hourly">Hourly</button>
-        <button class="pill-btn agg" data-agg="daily">Daily</button>
-        <button class="pill-btn agg" data-agg="monthly">Monthly</button>
-        <button class="pill-btn agg" data-agg="yearly">Yearly</button>
+    <div class="cg">
+      <span class="cg-label">View by</span>
+      <div class="ptabs">
+        <button class="ptab agg on" data-agg="hourly">Hourly</button>
+        <button class="ptab agg" data-agg="daily">Daily</button>
+        <button class="ptab agg" data-agg="monthly">Monthly</button>
+        <button class="ptab agg" data-agg="yearly">Yearly</button>
       </div>
     </div>
   </div>
 
   <!-- Chart -->
-  <div class="chart-section">
-    <div class="chart-header">
-      <div class="chart-title-block">
+  <div class="chart-box">
+    <div class="chart-hdr">
+      <div>
         <h2>View Count Over Time</h2>
-        <p id="chartSub">Click any video row below to plot it here · up to 5 at once</p>
+        <p id="chartSub">Click any video row below to plot it · up to 5 at once</p>
       </div>
-      <div class="selected-info" id="selInfo">No videos selected</div>
+      <div class="sel-info" id="selInfo">No videos selected</div>
     </div>
-    <div class="chart-wrap">
-      <div class="chart-empty" id="chartEmpty">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Click any video row to plot it here
+    <div class="chart-area">
+      <div class="chart-ph" id="chartPh">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Click a video row to start plotting
       </div>
-      <canvas id="mainChart"></canvas>
+      <canvas id="chart"></canvas>
     </div>
-    <div class="chart-legend" id="chartLegend"></div>
+    <div class="legend" id="legend"></div>
   </div>
 
   <!-- Table -->
-  <div class="table-section">
-    <div class="table-header">
+  <div class="tbl-box">
+    <div class="tbl-hdr">
       <h2>All Videos</h2>
-      <span class="result-count" id="resCount">Loading…</span>
+      <span class="res-ct" id="resCt">Loading…</span>
     </div>
     <div style="overflow-x:auto">
-      <table class="video-table">
+      <table>
         <thead>
           <tr>
-            <th style="width:44px">#</th>
+            <th style="width:40px">#</th>
             <th>Video</th>
             <th class="sorted">Growth</th>
             <th>Latest Views</th>
             <th class="hide-sm">Trend</th>
-            <th style="width:110px"></th>
+            <th style="width:108px"></th>
           </tr>
         </thead>
-        <tbody id="tBody"><tr><td colspan="6"><div class="empty-state">Loading CSV files…</div></td></tr></tbody>
+        <tbody id="tbody">
+          <tr><td colspan="6"><div class="empty">Loading CSV files from data/…</div></td></tr>
+        </tbody>
       </table>
     </div>
   </div>
-</div>
+
+</div><!-- /wrap -->
 
 <script>
-/* ── CONFIG ── */
-const DATA_DIR    = './data/';
-const FILE_PFX    = 'youtube_views_log_';
-const DATA_START  = '2025-08-03';
-const COLORS = ['#e84d8a','#7c5cfc','#22d3ee','#f59e0b','#34d399','#fb7185','#a78bfa','#67e8f9','#fcd34d','#6ee7b7'];
+/* ═══════════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════════ */
+const DATA_DIR   = './data/';
+const FILE_PFX   = 'youtube_views_log_';
+const DATA_START = '2025-08-03';          // first date to scan from
+const COLORS     = [
+  '#e84d8a','#7c5cfc','#22d3ee','#f59e0b',
+  '#34d399','#fb7185','#a78bfa','#67e8f9','#fcd34d','#6ee7b7'
+];
 
-/* ── STATE ── */
-let allSnaps     = [];   // [{date, rows}]
-let videoMap     = {};   // url → {title,url,series:[{ts,v}]}
-let filtered     = [];   // computed after filter+sort
-let selUrls      = [];
-let sortKey      = 'totalGain';
-let chartMode    = 'absolute';
-let aggMode      = 'hourly';
-let fromDate     = '';
-let toDate       = '';
-let chart        = null;
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+let allSnaps   = [];  // [{date, rows:[{Hours,Date,Month,Title,URL,Views}]}]
+let videoMap   = {};  // url → {title, url, points:[{ts,hours,date,month,year,v}]}
+let filtered   = [];  // after date+search+sort
+let selUrls    = [];
+let sortKey    = 'gain';
+let chartMode  = 'abs';
+let aggMode    = 'hourly';
+let fromDate   = '';
+let toDate     = '';
+let mainChart  = null;
 
-/* ── HELPERS ── */
+/* ═══════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════ */
 const fmt = n => {
   if (n == null || isNaN(n)) return '—';
   const a = Math.abs(n);
@@ -310,259 +334,307 @@ const fmt = n => {
   if (a >= 1e3) return (n/1e3).toFixed(1)+'K';
   return n.toLocaleString();
 };
-const fmtGain = g => g == null ? '—' : (g>=0?'+':'')+fmt(g);
-const vidId   = u => ((u||'').match(/v=([^&]+)/)||[])[1]||'';
-const dStr    = d => d.toISOString().slice(0,10);
-const pad2    = n => String(n).padStart(2,'0');
+const fmtG  = g  => g==null?'—':(g>=0?'+':'')+fmt(g);
+const vidId = u  => ((u||'').match(/v=([^&]+)/)||[])[1]||'';
+const dStr  = d  => d.toISOString().slice(0,10);
+const pad2  = n  => String(n).padStart(2,'0');
 
+/* Parse CSV text → array of objects (handles quoted commas) */
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
-  const hdr = lines[0].split(',').map(h=>h.trim());
+  const hdr = lines[0].split(',').map(h => h.trim());
   return lines.slice(1).map(line => {
-    const cols=[]; let cur='', inQ=false;
+    const cols = []; let cur = '', inQ = false;
     for (const ch of line) {
-      if (ch==='"') { inQ=!inQ; }
-      else if (ch===',' && !inQ) { cols.push(cur); cur=''; }
-      else cur+=ch;
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { cols.push(cur); cur = ''; }
+      else cur += ch;
     }
     cols.push(cur);
-    const o={};
-    hdr.forEach((h,i) => o[h]=(cols[i]||'').trim());
+    const o = {};
+    hdr.forEach((h, i) => o[h] = (cols[i]||'').trim());
     return o;
   });
 }
 
-function toDate(ts) { return new Date(ts.replace(' ','T')); }
-
-/* Bucket key for aggregation */
-function bKey(ts, agg) {
-  const d = toDate(ts);
-  if (isNaN(d)) return ts;
+/* Bucket key + display label per aggregation mode.
+   We use the pre-computed columns from the CSV directly:
+   - Hourly  → `Hours`  column  e.g. "2026-04-13 01:00:00"
+   - Daily   → `Date`   column  e.g. "2026-04-13"
+   - Monthly → `Month`  column  e.g. "2026-04-01"
+   - Yearly  → first 4 chars of `Date`
+*/
+function bucketOf(pt, agg) {
   switch(agg) {
-    case 'hourly':  return `${dStr(d)} ${pad2(d.getHours())}:00`;
-    case 'daily':   return dStr(d);
-    case 'monthly': return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`;
-    case 'yearly':  return `${d.getFullYear()}`;
+    case 'hourly':  return pt.hours;            // "2025-08-03 01:00:00"
+    case 'daily':   return pt.date;             // "2025-08-03"
+    case 'monthly': return pt.month;            // "2025-08-01"
+    case 'yearly':  return pt.date.slice(0,4);  // "2025"
   }
-  return ts;
 }
-/* Human label from bucket key */
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function bLabel(key, agg) {
+
+const MNAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function labelOf(key, agg) {
   switch(agg) {
-    case 'hourly':  return key;   // "2025-08-03 14:00"
-    case 'daily':   return key;   // "2025-08-03"
-    case 'monthly': {
-      const [yr,mo] = key.split('-');
-      return `${MONTHS[parseInt(mo)-1]} ${yr}`;
+    case 'hourly': {
+      // "2025-08-03 01:00:00" → "Aug 03 01:00"
+      const [d, t] = key.split(' ');
+      const dt = new Date(d+'T00:00:00');
+      return `${MNAMES[dt.getMonth()]} ${pad2(dt.getDate())} ${t.slice(0,5)}`;
     }
-    case 'yearly':  return key;
+    case 'daily': {
+      // "2025-08-03" → "Aug 03, 2025"
+      const dt = new Date(key+'T00:00:00');
+      return `${MNAMES[dt.getMonth()]} ${pad2(dt.getDate())}, ${dt.getFullYear()}`;
+    }
+    case 'monthly': {
+      // "2025-08-01" → "Aug 2025"
+      const dt = new Date(key+'T00:00:00');
+      return `${MNAMES[dt.getMonth()]} ${dt.getFullYear()}`;
+    }
+    case 'yearly': return key;  // "2025"
   }
   return key;
 }
 
-/* ── GENERATE DATE LIST ── */
+/* ═══════════════════════════════════════════════
+   GENERATE DATE LIST  start → today
+═══════════════════════════════════════════════ */
 function genDates() {
-  const dates=[], start=new Date(DATA_START), end=new Date();
+  const list = [], start = new Date(DATA_START), end = new Date();
   end.setHours(0,0,0,0);
-  for (let d=new Date(start); d<=end; d.setDate(d.getDate()+1))
-    dates.push(dStr(new Date(d)));
-  return dates;
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1))
+    list.push(dStr(new Date(d)));
+  return list;
 }
 
-/* ── FETCH + PARSE ── */
+/* ═══════════════════════════════════════════════
+   LOAD ALL CSV FILES
+═══════════════════════════════════════════════ */
 async function tryFetch(url) {
-  try { const r=await fetch(url); return r.ok ? await r.text() : null; }
+  try { const r = await fetch(url); return r.ok ? r.text() : null; }
   catch { return null; }
 }
 
 async function loadAll() {
-  setSub('Generating file list…');
+  setOv('Generating file list…', 0);
   const dates = genDates();
   const total = dates.length;
-  let loaded  = 0;
-  allSnaps    = [];
+  let done = 0;
+  allSnaps = [];
 
-  const BATCH = 10;
-  for (let i=0; i<total; i+=BATCH) {
-    const batch = dates.slice(i, i+BATCH);
-    const res = await Promise.all(batch.map(async date => {
-      const text = await tryFetch(`${DATA_DIR}${FILE_PFX}${date}.csv`);
-      loaded++;
-      if (loaded % 10 === 0 || loaded === total)
-        setSub(`Fetched ${loaded}/${total} files · found ${allSnaps.length} with data`);
-      if (!text) return null;
-      const rows = parseCSV(text);
+  const BATCH = 12;
+  for (let i = 0; i < total; i += BATCH) {
+    const batch = dates.slice(i, i + BATCH);
+    const results = await Promise.all(batch.map(async date => {
+      const txt = await tryFetch(`${DATA_DIR}${FILE_PFX}${date}.csv`);
+      done++;
+      const pct = Math.round((done/total)*100);
+      if (done % 8 === 0 || done === total)
+        setOv(`Fetched ${done}/${total} files · ${allSnaps.length} with data`, pct);
+      if (!txt) return null;
+      const rows = parseCSV(txt);
       return rows.length ? { date, rows } : null;
     }));
-    res.forEach(r => r && allSnaps.push(r));
+    results.forEach(r => r && allSnaps.push(r));
   }
 
-  /* Build videoMap */
+  /* Build videoMap using the new structured columns */
   videoMap = {};
   allSnaps.forEach(snap => {
     snap.rows.forEach(row => {
-      const url   = (row['URL']   || row['url']   || '').trim();
-      const title = (row['Title'] || row['title'] || '').trim();
-      const views = parseInt(row['Views'] || row['views'] || '0', 10);
-      const ts    = (row['Timestamp'] || row['timestamp'] || snap.date+' 00:00:00').trim();
+      const url   = (row['URL']   || '').trim();
+      const title = (row['Title'] || '').trim();
+      const views = parseInt(row['Views'] || '0', 10);
+      const ts    = (row['Timestamp'] || '').trim();
+      const hours = (row['Hours']     || ts).trim();
+      const date  = (row['Date']      || ts.slice(0,10)).trim();
+      const month = (row['Month']     || date.slice(0,7)+'-01').trim();
       if (!url) return;
-      if (!videoMap[url]) videoMap[url] = { title, url, series: [] };
+      if (!videoMap[url]) videoMap[url] = { title, url, points: [] };
       if (title) videoMap[url].title = title;
-      videoMap[url].series.push({ ts, v: views });
+      videoMap[url].points.push({ ts, hours, date, month, v: views });
     });
   });
-  Object.values(videoMap).forEach(v =>
-    v.series.sort((a,b) => a.ts.localeCompare(b.ts))
+
+  // Sort each video's points by timestamp
+  Object.values(videoMap).forEach(vid =>
+    vid.points.sort((a, b) => a.ts.localeCompare(b.ts))
   );
 }
 
-function setSub(t) { document.getElementById('loadSub').textContent = t; }
-
-/* ── FILTER HELPERS ── */
-function getFilteredSeries(video) {
-  let s = video.series;
-  if (fromDate) s = s.filter(p => p.ts >= fromDate);
-  if (toDate)   s = s.filter(p => p.ts <= toDate+' 23:59:59');
-  return s;
+function setOv(msg, pct) {
+  document.getElementById('ovSub').textContent = msg;
+  document.getElementById('ovBar').style.width = pct + '%';
 }
 
-function computeStats(video) {
-  const s = getFilteredSeries(video);
-  if (!s.length) return { latestViews:0, totalGain:0, filteredSeries:[] };
-  const latestViews = s[s.length-1].v;
-  const totalGain   = latestViews - s[0].v;
-  return { latestViews, totalGain, filteredSeries: s };
+/* ═══════════════════════════════════════════════
+   DATE FILTER — getFilteredPoints(video)
+═══════════════════════════════════════════════ */
+function getPoints(video) {
+  let pts = video.points;
+  if (fromDate) pts = pts.filter(p => p.date >= fromDate);
+  if (toDate)   pts = pts.filter(p => p.date <= toDate);
+  return pts;
 }
 
+function videoStats(video) {
+  const pts = getPoints(video);
+  if (!pts.length) return { latestViews: 0, gain: 0, pts: [] };
+  const latestViews = pts[pts.length-1].v;
+  const gain        = latestViews - pts[0].v;
+  return { latestViews, gain, pts };
+}
+
+/* ═══════════════════════════════════════════════
+   REBUILD filtered array
+═══════════════════════════════════════════════ */
 function rebuild() {
-  const q = (document.getElementById('searchInput').value||'').toLowerCase();
+  const q = (document.getElementById('search').value || '').toLowerCase();
   filtered = Object.values(videoMap)
-    .map(v => ({ ...v, ...computeStats(v) }))
-    .filter(v => {
-      if (!v.filteredSeries.length) return false;
-      if (q && !v.title.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  filtered.sort((a,b) => {
-    if (sortKey==='title')       return a.title.localeCompare(b.title);
-    if (sortKey==='latestViews') return b.latestViews - a.latestViews;
-    return b.totalGain - a.totalGain;
+    .map(v => ({ ...v, ...videoStats(v) }))
+    .filter(v => v.pts.length > 0 && (!q || v.title.toLowerCase().includes(q)));
+
+  filtered.sort((a, b) => {
+    if (sortKey === 'title')       return a.title.localeCompare(b.title);
+    if (sortKey === 'latestViews') return b.latestViews - a.latestViews;
+    return b.gain - a.gain;  // 'gain' default
   });
 }
 
-/* ── AGGREGATION ── */
-function aggregate(series, agg) {
-  if (agg === 'hourly') return series.map(p=>({ts:p.ts, v:p.v}));
-  const m = new Map();
-  series.forEach(p => {
-    const k = bKey(p.ts, agg);
-    m.set(k, p.v); // last value per bucket
+/* ═══════════════════════════════════════════════
+   AGGREGATION — collapses points into buckets
+   Uses last-value-wins (most recent snapshot in bucket)
+═══════════════════════════════════════════════ */
+function aggregate(pts, agg) {
+  const map = new Map();
+  pts.forEach(p => {
+    const k = bucketOf(p, agg);
+    // last value in bucket wins (most recent snapshot)
+    if (!map.has(k) || p.ts > map.get(k).ts)
+      map.set(k, p);
   });
-  return Array.from(m.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([ts,v])=>({ts,v}));
+  return Array.from(map.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([k, p]) => ({ key: k, v: p.v }));
 }
 
-/* ── CHART ── */
+/* ═══════════════════════════════════════════════
+   CHART
+═══════════════════════════════════════════════ */
 function buildChart() {
-  const ctx   = document.getElementById('mainChart').getContext('2d');
-  const empty = document.getElementById('chartEmpty');
+  const ph  = document.getElementById('chartPh');
+  const ctx = document.getElementById('chart').getContext('2d');
 
   if (!selUrls.length) {
-    empty.style.display = 'flex';
-    if (chart) { chart.destroy(); chart=null; }
+    ph.style.display = 'flex';
+    if (mainChart) { mainChart.destroy(); mainChart = null; }
     return;
   }
-  empty.style.display = 'none';
+  ph.style.display = 'none';
 
-  const sel = selUrls.map(url => {
-    const v = videoMap[url]; if (!v) return null;
-    const s = getFilteredSeries(v);
-    return { v, agg: aggregate(s, aggMode) };
+  // Build per-video aggregated series
+  const series = selUrls.map(url => {
+    const vid = videoMap[url]; if (!vid) return null;
+    const pts = getPoints(vid);
+    return { vid, agg: aggregate(pts, aggMode) };
   }).filter(Boolean);
 
-  /* Union of all bucket keys */
+  // Union of all bucket keys, sorted
   const keySet = new Set();
-  sel.forEach(({agg}) => agg.forEach(p => keySet.add(p.ts)));
-  const keys = Array.from(keySet).sort();
-  const labels = keys.map(k => bLabel(k, aggMode));
+  series.forEach(({ agg }) => agg.forEach(p => keySet.add(p.key)));
+  const keys   = Array.from(keySet).sort();
+  const labels = keys.map(k => labelOf(k, aggMode));
 
-  const datasets = sel.map(({v, agg}, i) => {
+  // Decide max ticks based on aggregation
+  const maxTicks = { hourly: 12, daily: 16, monthly: 18, yearly: 10 }[aggMode] || 14;
+
+  const datasets = series.map(({ vid, agg }, i) => {
     const color  = COLORS[i % COLORS.length];
-    const valMap = new Map(agg.map(p=>[p.ts,p.v]));
+    const valMap = new Map(agg.map(p => [p.key, p.v]));
     let raw = keys.map(k => valMap.has(k) ? valMap.get(k) : null);
     if (chartMode === 'delta') {
-      const base = raw.find(x=>x!=null) ?? 0;
-      raw = raw.map(x => x!=null ? x-base : null);
+      const base = raw.find(x => x != null) ?? 0;
+      raw = raw.map(x => x != null ? x - base : null);
     }
     return {
-      label: v.title,
+      label: vid.title,
       data: raw,
       borderColor: color,
-      backgroundColor: color+'18',
+      backgroundColor: color + '18',
       borderWidth: 2,
-      pointRadius: raw.length > 80 ? 0 : 3,
-      pointHoverRadius: 5,
-      tension: 0.3,
+      pointRadius: raw.length > 100 ? 0 : 3,
+      pointHoverRadius: 6,
+      tension: 0.35,
       fill: false,
       spanGaps: true,
     };
   });
 
-  if (chart) chart.destroy();
-  chart = new Chart(ctx, {
+  if (mainChart) mainChart.destroy();
+  mainChart = new Chart(ctx, {
     type: 'line',
     data: { labels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode:'index', intersect:false },
+      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor:'#1a1a24', borderColor:'#252535', borderWidth:1,
-          titleColor:'#6b6b8a', bodyColor:'#e8e8f0',
+          backgroundColor: '#1a1a24',
+          borderColor: '#252535',
+          borderWidth: 1,
+          titleColor: '#9090b0',
+          bodyColor: '#e8e8f0',
+          titleFont: { family: 'DM Mono', size: 11 },
+          bodyFont:  { family: 'DM Mono', size: 12 },
           callbacks: {
-            label: c => ` ${c.dataset.label.slice(0,38)}: ${fmt(c.parsed.y)}`
+            title: items => items[0].label,
+            label: ctx  => ` ${ctx.dataset.label.slice(0,40)}: ${fmt(ctx.parsed.y)}`
           }
         }
       },
       scales: {
         x: {
-          grid: { color:'#1c1c2c' },
+          grid: { color: '#1c1c2c' },
           ticks: {
-            color:'#6b6b8a',
-            font:{ family:'DM Mono', size:10 },
-            maxTicksLimit: aggMode==='hourly' ? 12 : aggMode==='daily' ? 14 : 16,
+            color: '#6b6b8a',
+            font: { family: 'DM Mono', size: 10 },
+            maxTicksLimit: maxTicks,
             maxRotation: 35,
           }
         },
         y: {
-          grid:{ color:'#1c1c2c' },
-          ticks:{ color:'#6b6b8a', font:{family:'DM Mono',size:10}, callback:v=>fmt(v) }
+          grid: { color: '#1c1c2c' },
+          ticks: {
+            color: '#6b6b8a',
+            font: { family: 'DM Mono', size: 10 },
+            callback: v => fmt(v)
+          }
         }
       }
     }
   });
 }
 
-function updateLegend() {
-  const leg  = document.getElementById('chartLegend');
+function refreshLegend() {
+  const leg  = document.getElementById('legend');
   const info = document.getElementById('selInfo');
   if (!selUrls.length) {
-    leg.innerHTML = '<span style="color:var(--muted);font-family:DM Mono;font-size:11px">Click rows below to add videos to the chart</span>';
+    leg.innerHTML  = '<span style="color:var(--muted);font-family:DM Mono;font-size:11px">Click video rows below to add them to the chart</span>';
     info.textContent = 'No videos selected';
     return;
   }
   info.textContent = `${selUrls.length}/5 video${selUrls.length!==1?'s':''} selected`;
-  leg.innerHTML = selUrls.map((url,i) => {
+  leg.innerHTML = selUrls.map((url, i) => {
     const v = videoMap[url]; if (!v) return '';
-    const c = COLORS[i%COLORS.length];
-    const safe = url.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return `<div class="legend-pill" onclick="rmChart('${safe}')">
-      <div class="dot" style="background:${c}"></div>
-      <span class="pname">${v.title}</span>
-      <span class="px">✕</span>
+    const c = COLORS[i % COLORS.length];
+    return `<div class="lpill" onclick="rmChart('${esc(url)}')">
+      <div class="ldot" style="background:${c}"></div>
+      <span class="lname">${v.title}</span>
+      <span class="lx">✕</span>
     </div>`;
   }).join('');
 }
@@ -571,196 +643,223 @@ function addChart(url) {
   if (selUrls.includes(url)) { rmChart(url); return; }
   if (selUrls.length >= 5) selUrls.shift();
   selUrls.push(url);
-  buildChart(); updateLegend(); renderTable();
+  buildChart(); refreshLegend(); renderTable();
 }
 function rmChart(url) {
-  selUrls = selUrls.filter(u=>u!==url);
-  buildChart(); updateLegend(); renderTable();
+  selUrls = selUrls.filter(u => u !== url);
+  buildChart(); refreshLegend(); renderTable();
 }
+function esc(s) { return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 
-/* ── SPARKLINES ── */
-function spark(canvas, series) {
-  const ctx=canvas.getContext('2d');
-  const w=canvas.width=80, h=canvas.height=32;
-  ctx.clearRect(0,0,w,h);
-  if (!series.length) return;
-  const vals=series.map(p=>p.v);
-  const mn=Math.min(...vals), mx=Math.max(...vals), rng=mx-mn||1;
-  ctx.strokeStyle='#7c5cfc'; ctx.lineWidth=1.5; ctx.beginPath();
-  vals.forEach((v,i)=>{
-    const x=(i/(vals.length-1||1))*w;
-    const y=h-((v-mn)/rng)*(h-4)-2;
-    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+/* ═══════════════════════════════════════════════
+   SPARKLINES
+═══════════════════════════════════════════════ */
+function drawSpark(canvas, pts) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width = 80, h = canvas.height = 30;
+  ctx.clearRect(0, 0, w, h);
+  if (!pts.length) return;
+  const vals = pts.map(p => p.v);
+  const mn = Math.min(...vals), mx = Math.max(...vals), rng = mx-mn||1;
+  ctx.strokeStyle = '#7c5cfc'; ctx.lineWidth = 1.5; ctx.beginPath();
+  vals.forEach((v, i) => {
+    const x = (i / (vals.length-1||1)) * w;
+    const y = h - ((v-mn)/rng) * (h-4) - 2;
+    i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
   });
   ctx.stroke();
 }
 
-/* ── STATS ── */
+/* ═══════════════════════════════════════════════
+   STATS BAR
+═══════════════════════════════════════════════ */
 function updateStats() {
-  document.getElementById('sVids').textContent = filtered.length;
-  const fromD = fromDate || (allSnaps[0]?.date) || DATA_START;
-  const toD   = toDate   || (allSnaps[allSnaps.length-1]?.date) || dStr(new Date());
+  const fromD = fromDate || allSnaps[0]?.date            || DATA_START;
+  const toD   = toDate   || allSnaps[allSnaps.length-1]?.date || dStr(new Date());
+  document.getElementById('sVids').textContent  = filtered.length;
   document.getElementById('sRange').textContent = `${fromD} → ${toD}`;
-
   if (!filtered.length) return;
-  const tv = filtered.reduce((a,b)=>a.latestViews>b.latestViews?a:b);
-  document.getElementById('sTopV').textContent = fmt(tv.latestViews);
-  document.getElementById('sTopT').textContent = tv.title.slice(0,32)+(tv.title.length>32?'…':'');
-  const tg = filtered.reduce((a,b)=>a.totalGain>b.totalGain?a:b);
-  document.getElementById('sFastV').textContent = fmtGain(tg.totalGain);
-  document.getElementById('sFastT').textContent = tg.title.slice(0,32)+(tg.title.length>32?'…':'');
-  const total = filtered.reduce((s,v)=>s+v.latestViews,0);
-  document.getElementById('sTotalV').textContent = fmt(total);
-  const pts = filtered.reduce((s,v)=>s+v.filteredSeries.length,0);
-  const snInRange = allSnaps.filter(s=>(!fromDate||s.date>=fromDate)&&(!toDate||s.date<=toDate)).length;
-  document.getElementById('sPoints').textContent = `${snInRange} files · ${pts.toLocaleString()} pts`;
+
+  const byV = filtered.reduce((a,b) => a.latestViews > b.latestViews ? a : b);
+  document.getElementById('sTopV').textContent = fmt(byV.latestViews);
+  document.getElementById('sTopT').textContent = (byV.title||'').slice(0,32)+'…'.slice(0,byV.title.length>32?1:0);
+
+  const byG = filtered.reduce((a,b) => a.gain > b.gain ? a : b);
+  document.getElementById('sFastV').textContent = fmtG(byG.gain);
+  document.getElementById('sFastT').textContent = (byG.title||'').slice(0,32)+'…'.slice(0,byG.title.length>32?1:0);
+
+  document.getElementById('sTot').textContent  = fmt(filtered.reduce((s,v) => s+v.latestViews, 0));
+
+  const snInRange = allSnaps.filter(s =>
+    (!fromDate || s.date >= fromDate) && (!toDate || s.date <= toDate)
+  ).length;
+  const pts = filtered.reduce((s,v) => s+v.pts.length, 0);
+  document.getElementById('sFiles').textContent = `${snInRange} files · ${pts.toLocaleString()} pts`;
 }
 
-/* ── TABLE ── */
+/* ═══════════════════════════════════════════════
+   TABLE
+═══════════════════════════════════════════════ */
 function renderTable() {
-  const tbody = document.getElementById('tBody');
-  document.getElementById('resCount').textContent =
+  const tbody = document.getElementById('tbody');
+  document.getElementById('resCt').textContent =
     `${filtered.length} of ${Object.keys(videoMap).length} videos`;
+
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No videos match the current filters.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty">No videos match the current filters.</div></td></tr>`;
     return;
   }
-  tbody.innerHTML = filtered.map((video,i) => {
-    const sel  = selUrls.includes(video.url);
-    const gCls = video.totalGain>0?'gain-pos':video.totalGain<0?'gain-neg':'gain-zero';
-    const cIdx = selUrls.indexOf(video.url);
-    const dot  = sel ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${COLORS[cIdx]};margin-right:6px;flex-shrink:0;margin-top:3px"></span>` : '';
-    const su   = video.url.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return `<tr class="${sel?'selected':''}" onclick="addChart('${su}')">
-      <td class="rank-num">${i+1}</td>
-      <td class="vtitle-cell">
+
+  tbody.innerHTML = filtered.map((v, i) => {
+    const sel  = selUrls.includes(v.url);
+    const ci   = selUrls.indexOf(v.url);
+    const gCls = v.gain > 0 ? 'gp' : v.gain < 0 ? 'gn' : 'gz';
+    const dot  = sel
+      ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${COLORS[ci]};flex-shrink:0;margin-right:6px;margin-top:3px"></span>`
+      : '';
+    const su = esc(v.url);
+    return `<tr class="${sel?'sel':''}" onclick="addChart('${su}')">
+      <td class="rk">${i+1}</td>
+      <td class="ttd">
         <div style="display:flex;align-items:flex-start">${dot}<div>
-          <div class="vtitle">${video.title}</div>
-          <div class="vid">youtu.be/${vidId(video.url)}</div>
+          <div class="ttitle">${v.title}</div>
+          <div class="tvid">youtu.be/${vidId(v.url)}</div>
         </div></div>
       </td>
-      <td class="gain-cell ${gCls}">${fmtGain(video.totalGain)}</td>
-      <td class="views-num">${fmt(video.latestViews)}</td>
-      <td class="hide-sm"><canvas class="mini-spark" data-url="${video.url}"></canvas></td>
+      <td class="gc ${gCls}">${fmtG(v.gain)}</td>
+      <td class="vn">${fmt(v.latestViews)}</td>
+      <td class="hide-sm"><canvas class="spark" data-url="${v.url}"></canvas></td>
       <td onclick="event.stopPropagation()">
-        <a href="${video.url}" target="_blank" style="text-decoration:none">
+        <a href="${v.url}" target="_blank" style="text-decoration:none">
           <button class="abtn" style="margin-right:4px" title="Open on YouTube">↗</button>
         </a>
-        <button class="${sel?'abtn added':'abtn'}"
+        <button class="${sel?'abtn on':'abtn'}"
           onclick="event.stopPropagation();addChart('${su}')">${sel?'✓ Added':'+ Chart'}</button>
       </td>
     </tr>`;
   }).join('');
 
   requestAnimationFrame(() => {
-    document.querySelectorAll('.mini-spark').forEach(c => {
+    document.querySelectorAll('.spark').forEach(c => {
       const v = videoMap[c.dataset.url];
-      if (v) spark(c, getFilteredSeries(v));
+      if (v) drawSpark(c, getPoints(v));
     });
   });
 }
 
-/* ── DATE FILTER ── */
+/* ═══════════════════════════════════════════════
+   DATE FILTER
+═══════════════════════════════════════════════ */
 function applyFilter() {
-  fromDate = document.getElementById('dateFrom').value;
-  toDate   = document.getElementById('dateTo').value;
-  const sn = allSnaps.filter(s=>(!fromDate||s.date>=fromDate)&&(!toDate||s.date<=toDate));
-  document.getElementById('dateInfo').textContent = `${sn.length} snapshot${sn.length!==1?'s':''} in range`;
-  const from = fromDate || (allSnaps[0]?.date) || DATA_START;
-  const to   = toDate   || (allSnaps[allSnaps.length-1]?.date) || dStr(new Date());
-  document.getElementById('hdrRange').textContent = `${from} – ${to}`;
+  fromDate = document.getElementById('dFrom').value;
+  toDate   = document.getElementById('dTo').value;
+
+  const snap = allSnaps.filter(s =>
+    (!fromDate || s.date >= fromDate) && (!toDate || s.date <= toDate)
+  );
+  document.getElementById('dInfo').textContent =
+    `${snap.length} snapshot${snap.length!==1?'s':''} in range`;
+
+  const f = fromDate || allSnaps[0]?.date            || DATA_START;
+  const t = toDate   || allSnaps[allSnaps.length-1]?.date || dStr(new Date());
+  document.getElementById('hRange').textContent = `${f} – ${t}`;
+
   rebuild(); updateStats(); renderTable();
   if (selUrls.length) buildChart();
-  updateLegend();
+  refreshLegend();
 }
 
 function quickRange(val) {
-  document.querySelectorAll('.qr-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelector(`.qr-btn[data-range="${val}"]`)?.classList.add('active');
-  if (val==='all') {
-    document.getElementById('dateFrom').value='';
-    document.getElementById('dateTo').value='';
+  document.querySelectorAll('.qr').forEach(b => b.classList.remove('on'));
+  document.querySelector(`.qr[data-r="${val}"]`)?.classList.add('on');
+  if (val === 'all') {
+    document.getElementById('dFrom').value = '';
+    document.getElementById('dTo').value   = '';
   } else {
-    const t=new Date(), f=new Date();
-    f.setDate(f.getDate()-parseInt(val));
-    document.getElementById('dateFrom').value=dStr(f);
-    document.getElementById('dateTo').value=dStr(t);
+    const t = new Date(), f = new Date();
+    f.setDate(f.getDate() - parseInt(val));
+    document.getElementById('dFrom').value = dStr(f);
+    document.getElementById('dTo').value   = dStr(t);
   }
   applyFilter();
 }
 
-/* ── EVENT WIRING ── */
-document.getElementById('searchInput').addEventListener('input', ()=>{
-  rebuild(); renderTable();
-});
-document.getElementById('dateFrom').addEventListener('change', ()=>{
-  document.querySelectorAll('.qr-btn').forEach(b=>b.classList.remove('active'));
-  applyFilter();
-});
-document.getElementById('dateTo').addEventListener('change', ()=>{
-  document.querySelectorAll('.qr-btn').forEach(b=>b.classList.remove('active'));
-  applyFilter();
-});
-document.querySelectorAll('.qr-btn').forEach(b=>
-  b.addEventListener('click', ()=>quickRange(b.dataset.range))
-);
-document.querySelectorAll('.pill-btn[data-sort]').forEach(b=>
-  b.addEventListener('click', ()=>{
-    document.querySelectorAll('.pill-btn[data-sort]').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active'); sortKey=b.dataset.sort; rebuild(); renderTable();
-  })
-);
-document.querySelectorAll('.pill-btn[data-mode]').forEach(b=>
-  b.addEventListener('click', ()=>{
-    document.querySelectorAll('.pill-btn[data-mode]').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active'); chartMode=b.dataset.mode;
-    document.getElementById('chartSub').textContent =
-      chartMode==='delta'
-        ? 'Showing cumulative view gains from the start of the selected date range'
-        : 'Click any video row below to plot it here · up to 5 at once';
-    if (selUrls.length) buildChart();
-  })
-);
-document.querySelectorAll('.pill-btn[data-agg]').forEach(b=>
-  b.addEventListener('click', ()=>{
-    document.querySelectorAll('.pill-btn[data-agg]').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active'); aggMode=b.dataset.agg;
-    if (selUrls.length) buildChart();
-  })
-);
+/* ═══════════════════════════════════════════════
+   EVENT WIRING
+═══════════════════════════════════════════════ */
+document.getElementById('search')
+  .addEventListener('input', () => { rebuild(); renderTable(); });
 
-/* ── BOOT ── */
+document.getElementById('dFrom')
+  .addEventListener('change', () => { document.querySelectorAll('.qr').forEach(b=>b.classList.remove('on')); applyFilter(); });
+document.getElementById('dTo')
+  .addEventListener('change', () => { document.querySelectorAll('.qr').forEach(b=>b.classList.remove('on')); applyFilter(); });
+
+document.querySelectorAll('.qr')
+  .forEach(b => b.addEventListener('click', () => quickRange(b.dataset.r)));
+
+document.querySelectorAll('.ptab[data-sort]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.ptab[data-sort]').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); sortKey = b.dataset.sort; rebuild(); renderTable();
+}));
+
+document.querySelectorAll('.ptab[data-mode]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.ptab[data-mode]').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); chartMode = b.dataset.mode;
+  document.getElementById('chartSub').textContent = chartMode === 'delta'
+    ? 'Showing cumulative view gains from start of selected date range'
+    : 'Click any video row below to plot it · up to 5 at once';
+  if (selUrls.length) buildChart();
+}));
+
+document.querySelectorAll('.ptab[data-agg]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.ptab[data-agg]').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); aggMode = b.dataset.agg;
+  if (selUrls.length) buildChart();
+}));
+
+/* ═══════════════════════════════════════════════
+   BOOT
+═══════════════════════════════════════════════ */
 async function init() {
-  await loadAll();
+  try {
+    await loadAll();
 
-  const dates = allSnaps.map(s=>s.date).sort();
-  const minD  = dates[0]   || DATA_START;
-  const maxD  = dates[dates.length-1] || dStr(new Date());
+    const dates = allSnaps.map(s => s.date).sort();
+    const minD  = dates[0]                    || DATA_START;
+    const maxD  = dates[dates.length-1]       || dStr(new Date());
 
-  ['dateFrom','dateTo'].forEach(id=>{
-    const el=document.getElementById(id);
-    el.setAttribute('min', minD);
-    el.setAttribute('max', maxD);
-  });
+    // Set date input bounds
+    ['dFrom','dTo'].forEach(id => {
+      const el = document.getElementById(id);
+      el.setAttribute('min', minD);
+      el.setAttribute('max', maxD);
+    });
 
-  document.getElementById('hdrRange').textContent = `${minD} – ${maxD}`;
-  document.getElementById('hdrMeta').textContent  =
-    `${Object.keys(videoMap).length} videos · ${allSnaps.length} files`;
-  document.getElementById('dateInfo').textContent =
-    `${allSnaps.length} snapshots in range`;
+    document.getElementById('hRange').textContent =
+      `${minD} – ${maxD}`;
+    document.getElementById('hMeta').textContent  =
+      `${Object.keys(videoMap).length} videos · ${allSnaps.length} files loaded`;
+    document.getElementById('dInfo').textContent  =
+      `${allSnaps.length} snapshots in range`;
 
-  rebuild(); updateStats(); renderTable(); updateLegend();
+    rebuild(); updateStats(); renderTable(); refreshLegend();
 
-  // Auto-select top grower
-  if (filtered.length) addChart(filtered[0].url);
+    // Auto-chart the top grower
+    if (filtered.length) addChart(filtered[0].url);
 
-  document.getElementById('loadingOverlay').classList.add('hidden');
+    // Hide overlay with fade
+    const ov = document.getElementById('overlay');
+    ov.classList.add('gone');
+    setTimeout(() => ov.style.display = 'none', 450);
+
+  } catch(err) {
+    document.getElementById('ovSub').textContent = `Error: ${err.message}`;
+    console.error(err);
+  }
 }
 
-init().catch(err=>{
-  setSub(`Error: ${err.message}`);
-  console.error(err);
-});
+init();
 </script>
 </body>
 </html>
